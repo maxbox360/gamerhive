@@ -23,3 +23,4 @@ class Gamer(AbstractUser):
     # Methods
     def __str__(self):
         return self.username
+
