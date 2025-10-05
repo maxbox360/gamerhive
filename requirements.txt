@@ -3,6 +3,7 @@ asgiref==3.9.0
 Django==5.2.4
 django-environ==0.12.0
 django-ninja==1.4.3
+igdb-api-v4
 pillow==11.3.0
 pydantic==2.11.7
 pydantic_core==2.33.2

@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash ./django-entrypoint.sh
     volumes:
       - ./backend:/app
       - media_volume:/app/media
