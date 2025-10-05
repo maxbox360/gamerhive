@@ -13,7 +13,7 @@ class PlatformAdmin(admin.ModelAdmin):
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'release_date', 'igdb_game_id')
+    list_display = ('name', 'slug', 'igdb_game_id')
     search_fields = ('name',)
     list_filter = ('genres', 'platforms')  # filters on right sidebar
     filter_horizontal = ('genres', 'platforms')  # nice multi-select widget for many-to-many
