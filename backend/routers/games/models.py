@@ -10,6 +10,9 @@ class Genre(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        app_label = 'gamerhive'
 
 
 class Platform(models.Model):
@@ -25,6 +28,9 @@ class Platform(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        app_label = 'gamerhive'
 
 
 class Game(models.Model):
@@ -42,4 +48,6 @@ class Game(models.Model):
 
     def __str__(self):
         return self.name
-
+    
+    class Meta:
+        app_label = 'gamerhive'

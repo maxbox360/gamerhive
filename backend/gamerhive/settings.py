@@ -48,9 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'gamerhive',
-    'routers.users',
-    'routers.games',
+    'gamerhive.apps.APIConfig',
 ]
 
 MIDDLEWARE = [
@@ -130,7 +128,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'gamerhive.User'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media/"
 
