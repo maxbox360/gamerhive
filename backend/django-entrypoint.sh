@@ -27,7 +27,15 @@ while True:
 print("Postgres is ready!")
 END
 
-echo "Running migrations..."
+export PYTHONPATH=/app
+export DJANGO_SETTINGS_MODULE=gamerhive.settings
+
+echo "Checking for model changes..."
+if ! python manage.py makemigrations --check --dry-run; then
+    echo "Unapplied model changes detected, generating migrations..."
+    python manage.py makemigrations
+fi
+
 python manage.py migrate
 
 echo "Creating superuser if needed..."
@@ -35,4 +43,3 @@ python init_superuser.py
 
 echo "Starting Django server..."
 exec python manage.py runserver 0.0.0.0:8000
-
