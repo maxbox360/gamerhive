@@ -14,9 +14,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: gamerhive
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: gamerhive
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -24,4 +24,3 @@ services:
 
 volumes:
   postgres_data:
-
