@@ -8,6 +8,7 @@ admin.site.register(User)
 class GameAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "created_at")  # fields shown in the list
     search_fields = ("name",)  # enables search by name
+    filter_horizontal = ("genres", "platforms")  # better interface for many-to-many fields
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
