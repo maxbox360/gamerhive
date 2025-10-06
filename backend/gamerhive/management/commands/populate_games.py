@@ -9,33 +9,58 @@ from gamerhive.models import Game, Genre, Platform
 
 CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("IGDB_ACCESS_TOKEN")
+TOTAL_GAMES = 20000
+BATCH_SIZE = 500
 
-# Configuration
-TOTAL_GAMES = 20000 # total number of games to fetch
-BATCH_SIZE = 500    # IGDB API max per request
-
-def get_platform_ids(families=("PlayStation", "Xbox", "Nintendo", "Sega")):
-    """Return a list of IGDB platform IDs for the specified families."""
-    platform_ids = []
-    for family in families:
-        ids = Platform.objects.filter(name__icontains=family).values_list("igdb_platform_id", flat=True)
-        platform_ids.extend(ids)
-    return platform_ids
-
-platform_ids = get_platform_ids()
-platform_ids_str = ", ".join(str(p) for p in platform_ids)
+SKIP_SUMMARY_TERMS = ["mod", "romhack", "hack", "fanmade"]
+SKIP_NAME_TERMS = ["randomizer"]
+PLATFORM_FAMILIES = ("PlayStation", "Xbox", "Nintendo", "Sega")
 
 
-# Queries
-GENRE_QUERY = "fields id,name; limit 500;"
-PLATFORM_QUERY = "fields id,name; limit 500;"
-GAME_QUERY_TEMPLATE = f"""
-fields id,name,genres,platforms,cover,summary,slug;
-sort popularity desc;
-where platforms = ({platform_ids_str});
-limit {{limit}};
-offset {{offset}};
-"""
+def get_platform_ids(families=PLATFORM_FAMILIES):
+    ids = Platform.objects.filter(
+        name__icontains=families[0]  # will chain below
+    ).values_list("igdb_platform_id", flat=True)
+    for family in families[1:]:
+        ids = list(ids) + list(
+            Platform.objects.filter(name__icontains=family).values_list(
+                "igdb_platform_id", flat=True
+            )
+        )
+    return ids
+
+
+def create_unique_slug(name):
+    base_slug = slugify(name)
+    slug = base_slug
+    counter = 1
+    while Game.objects.filter(slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    return slug
+
+
+def should_skip_game(game_data):
+    name = game_data.get("name", "")
+    summary = game_data.get("summary", "")
+    if not name or not summary:
+        return True
+
+    # Skip based on platform category
+    platform_objs = Platform.objects.filter(
+        igdb_platform_id__in=game_data.get("platforms", [])
+    )
+    if any(p.category == 5 for p in platform_objs):
+        return True
+
+    # Skip by banned words
+    if any(word.lower() in name.lower() for word in SKIP_NAME_TERMS):
+        return True
+    if any(word.lower() in summary.lower() for word in SKIP_SUMMARY_TERMS):
+        return True
+
+    return False
+
 
 class Command(BaseCommand):
     help = "Populate Game, Genre, and Platform models from IGDB"
@@ -56,46 +81,55 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Finished populating IGDB data!"))
 
     def populate_genres(self):
-        # Call IGDB /genres endpoint
-        response = self.igdb.api_request("genres", GENRE_QUERY)
+        query = "fields id,name; limit 500;"
+        response = self.igdb.api_request("genres", query)
         data = self._decode_response(response)
         for g in data:
             name = g.get("name", "")
             if not name:
                 continue
             Genre.objects.update_or_create(
-                igdb_genre_id=g.get("id", None),
+                igdb_genre_id=g.get("id"),
                 defaults={
                     "name": name,
                     "slug": slugify(name),
                     "created_at": timezone.now(),
                     "updated_at": timezone.now(),
-                }
+                },
             )
 
     def populate_platforms(self):
-        # Call IGDB /platforms endpoint
-        response = self.igdb.api_request("platforms", PLATFORM_QUERY)
+        query = "fields id,name; limit 500;"
+        response = self.igdb.api_request("platforms", query)
         data = self._decode_response(response)
         for p in data:
             name = p.get("name", "")
             if not name:
                 continue
             Platform.objects.update_or_create(
-                igdb_platform_id=p.get("id", None),
+                igdb_platform_id=p.get("id"),
                 defaults={
                     "name": name,
                     "slug": slugify(name),
                     "abbreviation": p.get("abbreviation", ""),
-                    "category": p.get("category", None),
-                    "platform_type": p.get("platform_type", None),
+                    "category": p.get("category"),
+                    "platform_type": p.get("platform_type"),
                     "url": p.get("url", ""),
                     "created_at": timezone.now(),
                     "updated_at": timezone.now(),
-                }
+                },
             )
 
     def populate_games(self):
+        platform_ids_str = ", ".join(str(p) for p in get_platform_ids())
+        GAME_QUERY_TEMPLATE = f"""
+        fields id,name,genres,platforms,cover,summary,slug;
+        where platforms = ({platform_ids_str});
+        sort popularity desc;
+        limit {{limit}};
+        offset {{offset}};
+        """
+
         for offset in range(0, TOTAL_GAMES, BATCH_SIZE):
             self.stdout.write(f"Fetching games {offset + 1} to {offset + BATCH_SIZE}...")
             query = GAME_QUERY_TEMPLATE.format(limit=BATCH_SIZE, offset=offset)
@@ -103,28 +137,23 @@ class Command(BaseCommand):
             data = self._decode_response(response)
 
             for g in data:
-                name = g.get("name", "")
-                if not name:
+                if should_skip_game(g):
                     continue
-                base_slug = slugify(g.get("slug") or g.get("name", ""))
-                slug = base_slug
-                counter = 1
-                while Game.objects.filter(slug=slug).exists():
-                    slug = f"{base_slug}-{counter}"
-                    counter += 1
+
+                slug = create_unique_slug(g.get("slug") or g.get("name"))
                 game_obj, _ = Game.objects.update_or_create(
                     igdb_game_id=g.get("id"),
                     defaults={
-                        "name": name,
+                        "name": g.get("name"),
                         "slug": slug,
-                        "summary": g.get("summary", ""),
+                        "summary": g.get("summary"),
                         "cover_id": g.get("cover"),
                         "created_at": timezone.now(),
                         "updated_at": timezone.now(),
-                    }
+                    },
                 )
 
-                # Assign M2M relationships
+                # Assign M2M
                 for genre_id in g.get("genres", []):
                     try:
                         genre_obj = Genre.objects.get(igdb_genre_id=genre_id)
@@ -140,11 +169,8 @@ class Command(BaseCommand):
                         continue
 
                 game_obj.save()
-        
-    
+
     def _decode_response(self, response):
-        """Convert bytes response to JSON-like list if needed"""
         if isinstance(response, bytes):
-            import json
             return json.loads(response.decode("utf-8"))
         return response
