@@ -32,14 +32,30 @@ class Platform(models.Model):
     class Meta:
         app_label = 'gamerhive'
 
+class Company(models.Model):
+    igdb_company_id = models.IntegerField(unique=True)
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        app_label = 'gamerhive'
+
 
 class Game(models.Model):
     igdb_game_id = models.IntegerField(unique=True)
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
     summary = models.TextField(blank=True)
+    story_line = models.TextField(blank=True, null=True)
+    release_date = models.DateTimeField(blank=True, null=True)
     url = models.URLField(blank=True)
-    cover_id = models.IntegerField(null=True, blank=True)
+    cover_url = models.URLField(max_length=500, blank=True, null=True)
+    screenshots = models.JSONField(blank=True, null=True)
+    websites = models.JSONField(blank=True, null=True)
+    publishers = models.ManyToManyField(Company, related_name="published_games", blank=True)
+    developers = models.ManyToManyField(Company, related_name="developed_games", blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
 
