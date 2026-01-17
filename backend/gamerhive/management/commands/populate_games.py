@@ -5,11 +5,11 @@ from igdb.wrapper import IGDBWrapper
 import os
 import json
 
-from gamerhive.models import Game, Genre, Platform
+from gamerhive.models import Game, Genre, Platform, Company
 
 CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("IGDB_ACCESS_TOKEN")
-TOTAL_GAMES = 20000
+TOTAL_GAMES = 100000
 BATCH_SIZE = 500
 
 SKIP_SUMMARY_TERMS = ["mod", "romhack", "hack", "fanmade"]
@@ -68,62 +68,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Connecting to IGDB...")
         self.igdb = IGDBWrapper(CLIENT_ID, ACCESS_TOKEN)
-
-        self.stdout.write("Populating genres...")
-        self.populate_genres()
-
-        self.stdout.write("Populating platforms...")
-        self.populate_platforms()
-
-        self.stdout.write("Populating games...")
         self.populate_games()
+        self.stdout.write(self.style.SUCCESS("Finished populating game data!"))
 
-        self.stdout.write(self.style.SUCCESS("Finished populating IGDB data!"))
-
-    def populate_genres(self):
-        query = "fields id,name; limit 500;"
-        response = self.igdb.api_request("genres", query)
-        data = self._decode_response(response)
-        for g in data:
-            name = g.get("name", "")
-            if not name:
-                continue
-            Genre.objects.update_or_create(
-                igdb_genre_id=g.get("id"),
-                defaults={
-                    "name": name,
-                    "slug": slugify(name),
-                    "created_at": timezone.now(),
-                    "updated_at": timezone.now(),
-                },
-            )
-
-    def populate_platforms(self):
-        query = "fields id,name; limit 500;"
-        response = self.igdb.api_request("platforms", query)
-        data = self._decode_response(response)
-        for p in data:
-            name = p.get("name", "")
-            if not name:
-                continue
-            Platform.objects.update_or_create(
-                igdb_platform_id=p.get("id"),
-                defaults={
-                    "name": name,
-                    "slug": slugify(name),
-                    "abbreviation": p.get("abbreviation", ""),
-                    "category": p.get("category"),
-                    "platform_type": p.get("platform_type"),
-                    "url": p.get("url", ""),
-                    "created_at": timezone.now(),
-                    "updated_at": timezone.now(),
-                },
-            )
 
     def populate_games(self):
         platform_ids_str = ", ".join(str(p) for p in get_platform_ids())
         GAME_QUERY_TEMPLATE = f"""
-        fields id,name,genres,platforms,cover,summary,slug;
+        fields id,name,genres,platforms,cover.image_id,summary,slug;
         where platforms = ({platform_ids_str});
         sort popularity desc;
         limit {{limit}};
@@ -136,18 +88,30 @@ class Command(BaseCommand):
             response = self.igdb.api_request("games", query)
             data = self._decode_response(response)
 
+
+            existing_ids = set(Game.objects.exclude(igdb_game_id__isnull=True).values_list("igdb_game_id", flat=True))
+
             for g in data:
-                if should_skip_game(g):
+                if g.get("id") in existing_ids:
                     continue
 
+                if should_skip_game(g):
+                    continue
+                
+
                 slug = create_unique_slug(g.get("slug") or g.get("name"))
+                cover = g.get("cover", {})
+                image_id = cover.get("image_id")
+                cover_url = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg" if image_id else None
+
                 game_obj, _ = Game.objects.update_or_create(
                     igdb_game_id=g.get("id"),
                     defaults={
                         "name": g.get("name"),
                         "slug": slug,
                         "summary": g.get("summary"),
-                        "cover_id": g.get("cover"),
+                        "storyline": g.get("storyline"),             
+                        "cover_url": cover_url,
                         "created_at": timezone.now(),
                         "updated_at": timezone.now(),
                     },
@@ -167,6 +131,33 @@ class Command(BaseCommand):
                         game_obj.platforms.add(platform_obj)
                     except Platform.DoesNotExist:
                         continue
+
+                # --- Fetch developer/publisher ---
+                involved_companies_ids = g.get("involved_companies", [])
+                if involved_companies_ids:
+                    ics = self.get_involved_companies(involved_companies_ids)
+
+                    dev_ids = [ic['company'] for ic in ics if ic.get('developer')]
+                    pub_ids = [ic['company'] for ic in ics if ic.get('publisher')]
+
+                    dev_companies = self.get_companies_by_ids(dev_ids)
+                    pub_companies = self.get_companies_by_ids(pub_ids)
+
+                    # --- Update M2M for developers ---
+                    for c in dev_companies:
+                        company_obj, _ = Company.objects.update_or_create(
+                            igdb_company_id=c['id'],
+                            defaults={'name': c['name']}
+                        )
+                        game_obj.developers.add(company_obj)
+
+                    # --- Update M2M for publishers ---
+                    for c in pub_companies:
+                        company_obj, _ = Company.objects.update_or_create(
+                            igdb_company_id=c['id'],
+                            defaults={'name': c['name']}
+                        )
+                        game_obj.publishers.add(company_obj)
 
                 game_obj.save()
 
