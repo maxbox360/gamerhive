@@ -15,6 +15,19 @@ services:
       - .env
     depends_on:
       - db
+      - redis
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://django:8000
+    depends_on:
+      - django
 
   db:
     container_name: db
@@ -27,6 +40,12 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    container_name: redis
+    image: redis:7
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:
