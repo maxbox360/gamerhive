@@ -24,7 +24,6 @@ export default function Header() {
         <Link href="/lists" style={{ color: "#FFD700", textDecoration: "none" }}>Lists</Link>
         <input
           type="text"
-          placeholder="Search games"
           style={{
             padding: "0.3rem 0.5rem",
             borderRadius: "5px",
