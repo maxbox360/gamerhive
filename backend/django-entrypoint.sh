@@ -41,5 +41,13 @@ python manage.py migrate
 echo "Creating superuser if needed..."
 python init_superuser.py
 
+# Run gamerhive_init to populate data from IGDB (only if GAMERHIVE_INIT=true)
+if [ "$GAMERHIVE_INIT" = "true" ]; then
+    echo "Running GamerHive initialization (populating games, genres, platforms, companies)..."
+    python manage.py gamerhive_init
+else
+    echo "Skipping GamerHive init (set GAMERHIVE_INIT=true to populate data)"
+fi
+
 echo "Starting Django server..."
 exec python manage.py runserver 0.0.0.0:8000
