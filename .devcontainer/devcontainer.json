@@ -1,0 +1,49 @@
+{
+  "name": "GamerHive Django",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.devcontainer.yml"],
+  "service": "django",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-azuretools.vscode-docker",
+        "batisteo.vscode-django",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoImportCompletions": true,
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true
+        },
+        "files.associations": {
+          "**/*.html": "html",
+          "**/templates/**/*.html": "django-html",
+          "**/templates/**/*": "django-txt"
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [8000, 5432, 6379, 3000],
+  "portsAttributes": {
+    "8000": { "label": "Django Backend", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6379": { "label": "Redis", "onAutoForward": "silent" },
+    "3000": { "label": "Next.js Frontend", "onAutoForward": "notify" }
+  },
+
+  "postCreateCommand": "pip install debugpy",
+
+  "remoteUser": "root"
+}
+
