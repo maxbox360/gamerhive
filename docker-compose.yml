@@ -25,7 +25,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://django:8000
+      # Use localhost for client-side browser requests
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - django
 

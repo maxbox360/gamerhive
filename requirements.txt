@@ -11,4 +11,5 @@ sqlparse==0.5.3
 psycopg[binary]
 typing-inspection==0.4.1
 typing_extensions==4.14.1
-
+debugpy>=1.8.0
+django-cors-headers>=4.3.0
