@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import GameCard from "@/components/GameCard";
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 import {
-  EuiFieldSearch,
-  EuiSelect,
   EuiFlexGroup,
   EuiFlexItem,
   EuiPagination,
@@ -126,9 +124,9 @@ export default function GamesPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#1a1a1a" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#262626" }}>
       {/* Page Header */}
-      <EuiPanel paddingSize="l" borderRadius="none" style={{ backgroundColor: "#1a1a1a" }}>
+      <EuiPanel paddingSize="l" borderRadius="none" style={{ backgroundColor: "#262626" }}>
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
           <EuiTitle size="l">
             <h1 style={{ color: "#FFD700" }}>Games</h1>
@@ -154,30 +152,38 @@ export default function GamesPage() {
               placeholder="Search games..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: "100%", padding: "8px 12px", borderRadius: 4, border: "1px solid #333", background: "#1a1a1a", color: "#fff" }}
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 4, border: "1px solid #333", background: "#262626", color: "#fff" }}
             />
           </EuiFlexItem>
 
-          {/* Genre Dropdown */}
+          {/* Genre Dropdown (native to avoid React 19 .ref access in EUI) */}
           <EuiFlexItem grow={1} style={{ minWidth: "150px" }}>
-            <EuiSelect
-              options={genreOptions}
+            <select
               value={genreFilter}
               onChange={(e) => setGenreFilter(e.target.value)}
-              fullWidth
-              style={{ backgroundColor: "#1a1a1a", color: "#fff", border: "1px solid #333" }}
-            />
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 4, border: "1px solid #333", background: "#262626", color: "#fff" }}
+            >
+              {genreOptions.map((opt) => (
+                <option key={opt.value || "all"} value={opt.value}>
+                  {opt.text}
+                </option>
+              ))}
+            </select>
           </EuiFlexItem>
 
-          {/* Platform Dropdown */}
+          {/* Platform Dropdown (native to avoid React 19 .ref access in EUI) */}
           <EuiFlexItem grow={1} style={{ minWidth: "150px" }}>
-            <EuiSelect
-              options={platformOptions}
+            <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              fullWidth
-              style={{ backgroundColor: "#1a1a1a", color: "#fff", border: "1px solid #333" }}
-            />
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 4, border: "1px solid #333", background: "#262626", color: "#fff" }}
+            >
+              {platformOptions.map((opt) => (
+                <option key={opt.value || "all"} value={opt.value}>
+                  {opt.text}
+                </option>
+              ))}
+            </select>
           </EuiFlexItem>
 
           {/* Clear Filters */}
