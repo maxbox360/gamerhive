@@ -128,13 +128,13 @@ export default function GamesPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#1a1a1a" }}>
       {/* Page Header */}
-      <EuiPanel paddingSize="l" color="subdued" borderRadius="none">
+      <EuiPanel paddingSize="l" borderRadius="none" style={{ backgroundColor: "#1a1a1a" }}>
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
           <EuiTitle size="l">
             <h1 style={{ color: "#FFD700" }}>Games</h1>
           </EuiTitle>
           <EuiSpacer size="s" />
-          <EuiText color="subdued">
+          <EuiText style={{ color: "#ccc" }}>
             <p>Discover and explore our collection of {(pagination.total ?? 0).toLocaleString()} games</p>
           </EuiText>
         </div>
@@ -147,12 +147,14 @@ export default function GamesPage() {
         <EuiFlexGroup gutterSize="m" wrap responsive>
           {/* Search */}
           <EuiFlexItem grow={2} style={{ minWidth: "200px" }}>
-            <EuiFieldSearch
+            {/* Use a native input search to avoid React 19 element.ref deprecation warnings
+                caused by some third-party components accessing the React element.ref getter. */}
+            <input
+              type="search"
               placeholder="Search games..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              isClearable
-              fullWidth
+              style={{ width: "100%", padding: "8px 12px", borderRadius: 4, border: "1px solid #333", background: "#1a1a1a", color: "#fff" }}
             />
           </EuiFlexItem>
 
@@ -163,6 +165,7 @@ export default function GamesPage() {
               value={genreFilter}
               onChange={(e) => setGenreFilter(e.target.value)}
               fullWidth
+              style={{ backgroundColor: "#1a1a1a", color: "#fff", border: "1px solid #333" }}
             />
           </EuiFlexItem>
 
@@ -173,6 +176,7 @@ export default function GamesPage() {
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
               fullWidth
+              style={{ backgroundColor: "#1a1a1a", color: "#fff", border: "1px solid #333" }}
             />
           </EuiFlexItem>
 

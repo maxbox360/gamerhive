@@ -26,9 +26,18 @@ class GameSchema(Schema):
     name: str
     slug: str
     summary: Optional[str]
-    cover_id: Optional[int]
+    cover_url: Optional[str]
     genres: List[GenreSchema]
     platforms: List[PlatformSchema]
     created_at: datetime
     updated_at: datetime
+
+
+class PaginatedGameResponse(Schema):
+    items: List[GameSchema]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
 
