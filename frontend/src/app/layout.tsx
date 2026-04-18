@@ -1,5 +1,6 @@
 import "./globals.css";
 import Header from "../components/Header";
+import Providers from "../components/Providers";
 
 export const metadata = {
   title: "GamerHive",
@@ -14,8 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, backgroundColor: "#111", color: "#fff" }}>
-        <Header />
-        <main>{children}</main>
+        <Providers>
+          <Header />
+          <main style={{ paddingTop: "48px" }}>{children}</main>
+        </Providers>
       </body>
     </html>
   );

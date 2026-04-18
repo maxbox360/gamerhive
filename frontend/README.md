@@ -34,3 +34,35 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Local setup
+
+Recommended commands to set up and run the frontend locally:
+
+```bash
+# install dependencies
+npm install
+
+# if you hit peer dependency resolution errors on your machine, try:
+# npm install --legacy-peer-deps
+
+# development server
+npm run dev
+
+# build for production
+npm run build
+```
+
+If you only need to add the runtime dependencies that this project expects (fast fix), you can run:
+
+```bash
+npm install moment @elastic/eui-theme-borealis
+```
+
+For a clean reinstall (if things are broken):
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+

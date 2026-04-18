@@ -110,7 +110,7 @@ class Command(BaseCommand):
                         "name": g.get("name"),
                         "slug": slug,
                         "summary": g.get("summary"),
-                        "storyline": g.get("storyline"),             
+                        "story_line": g.get("storyline"),
                         "cover_url": cover_url,
                         "created_at": timezone.now(),
                         "updated_at": timezone.now(),
