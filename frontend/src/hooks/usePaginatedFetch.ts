@@ -17,11 +17,11 @@ interface UsePaginatedFetchResult<T> {
 
 /**
  * Generic hook for fetching paginated data
- *
+ * 
  * @param buildUrl - Function that builds the API URL with current page and filters
  * @param dependencies - Array of dependencies that should trigger a refetch (filters, etc.)
  * @param options - Optional configuration (pageSize, initialPage)
- *
+ * 
  * @example
  * const { items, loading, pagination, setPage } = usePaginatedFetch<Game>(
  *   (page, pageSize) => `${API_URL}/games/?page=${page}&page_size=${pageSize}&genre=${genre}`,
@@ -90,4 +90,3 @@ export function usePaginatedFetch<T>(
     refetch: fetchData,
   };
 }
-

@@ -1,6 +1,6 @@
 # backend/gamerhive/schemas.py
 from ninja import Schema
-from typing import List, Optional, Generic, TypeVar
+from typing import List, Optional
 from datetime import datetime
 
 class GenreSchema(Schema):
@@ -26,16 +26,9 @@ class GameSchema(Schema):
     name: str
     slug: str
     summary: Optional[str]
-    cover_url: Optional[str]
+    cover_id: Optional[int]
     genres: List[GenreSchema]
     platforms: List[PlatformSchema]
     created_at: datetime
     updated_at: datetime
-
-class PaginatedGamesSchema(Schema):
-    items: List[GameSchema]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
 

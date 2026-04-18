@@ -22,4 +22,3 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
   disabled?: boolean;
 }
-
