@@ -45,30 +45,18 @@ Today, the app includes:
    cd gamerhive
    ```
 
-2. **Set up IGDB credentials:**
-   - Go to https://www.twitch.tv/login and sign in (or create an account)
-   - Visit https://dev.twitch.tv/console/apps and create a new application
-   - Get your **Client ID** and generate a **Client Secret**
-   - Clone your `.env` and add these temporarily:
-     ```
-     IGDB_CLIENT_ID=your_client_id
-     IGDB_CLIENT_SECRET=your_client_secret
-     ```
-   - Run the token generator:
-     ```bash
-     python generate_igdb_token.py
-     ```
-   - Copy the **Access Token** output and add it to `.env`:
-     ```
-     IGDB_ACCESS_TOKEN=your_access_token
-     ```
-
-3. **Create `.env` file** with all required variables:
+2. **Create `.env` file** — run the setup script (handles IGDB token generation automatically):
    ```bash
-   cp .env.example .env  # or create manually with values below
+   python setup_env.py
    ```
 
-   Full list of environment variables:
+   This prompts you for:
+   - Database credentials
+   - Django secret key and superuser account
+   - IGDB Client ID & Secret (gets access token for you)
+   - Redis URL (optional)
+
+   Or create manually with these variables:
    ```
    # Database
    POSTGRES_USER=gamerhive
@@ -84,7 +72,7 @@ Today, the app includes:
    DJANGO_SUPERUSER_PASSWORD=your_admin_password
    DEBUG=True
 
-   # IGDB API (from steps above)
+   # IGDB API (get from https://dev.twitch.tv/console/apps)
    IGDB_CLIENT_ID=your_client_id
    IGDB_ACCESS_TOKEN=your_access_token
 
