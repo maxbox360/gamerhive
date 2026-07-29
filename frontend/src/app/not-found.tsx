@@ -1,19 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { EuiPanel, EuiTitle, EuiText, EuiButton, EuiSpacer } from "@elastic/eui";
 
-const messages = [
-  "Your princess is in another castle.",
-  "It's dangerous to go alone! Take this.",
-  "404 — The map doesn't lead anywhere.",
-  "You fell down a pit. No game here.",
-  "This page went to sleep — try waking it up.",
-];
-
 export default function NotFound() {
-  const msg = useMemo(() => messages[Math.floor(Math.random() * messages.length)], []);
+  const msg = "404 — The map doesn't lead anywhere.";
 
   return (
     <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -38,4 +29,3 @@ export default function NotFound() {
     </div>
   );
 }
-

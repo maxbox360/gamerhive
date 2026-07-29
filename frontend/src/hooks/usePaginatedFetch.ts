@@ -65,7 +65,7 @@ export function usePaginatedFetch<T>(
       setTotalPages(data.total_pages);
       setTotal(data.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Could not reach API");
       setItems([]);
     } finally {
       setLoading(false);

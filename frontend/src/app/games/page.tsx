@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import GameCard from "@/components/GameCard";
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
+import type { Game, Genre, Platform } from "@/types";
 import {
   EuiFlexGroup,
   EuiFlexItem,
@@ -16,29 +17,6 @@ import {
   EuiPanel,
 } from "@elastic/eui";
 
-interface Genre {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-interface Platform {
-  id: number;
-  name: string;
-  slug: string;
-  abbreviation?: string;
-}
-
-interface Game {
-  id: number;
-  name: string;
-  slug: string;
-  summary?: string;
-  cover_url?: string;
-  genres: Genre[];
-  platforms: Platform[];
-}
-
 export default function GamesPage() {
   // Available filter options
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -51,14 +29,15 @@ export default function GamesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBaseUrl = apiUrl.replace(/\/$/, "");
 
   // Fetch genres and platforms for dropdowns
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const [genresRes, platformsRes] = await Promise.all([
-          fetch(`${apiUrl}/api/games/genres`),
-          fetch(`${apiUrl}/api/games/platforms`),
+          fetch(`${apiBaseUrl}/api/games/genres`),
+          fetch(`${apiBaseUrl}/api/games/platforms`),
         ]);
 
         if (genresRes.ok) {
@@ -76,7 +55,7 @@ export default function GamesPage() {
     };
 
     fetchFilters();
-  }, [apiUrl]);
+  }, [apiBaseUrl]);
 
   // Debounce search input
   useEffect(() => {
@@ -94,9 +73,9 @@ export default function GamesPage() {
       if (genreFilter) params.append("genre", genreFilter);
       if (platformFilter) params.append("platform", platformFilter);
       if (debouncedSearch) params.append("search", debouncedSearch);
-      return `${apiUrl}/api/games/games/?${params}`;
+      return `${apiBaseUrl}/api/games/games/?${params}`;
     },
-    [apiUrl, genreFilter, platformFilter, debouncedSearch]
+    [apiBaseUrl, genreFilter, platformFilter, debouncedSearch]
   );
 
   const { items: games, loading, error, pagination, setPage, refetch } =
@@ -241,7 +220,7 @@ export default function GamesPage() {
             }}
           >
             {games.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard key={game.id} game={game} variant="default" />
             ))}
           </div>
         )}
@@ -273,5 +252,3 @@ export default function GamesPage() {
     </div>
   );
 }
-
-
