@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Game } from "@/types";
 
 type GameCardVariant = "compact" | "default" | "featured";
@@ -37,14 +36,11 @@ export default function GameCard({ game, variant = "default" }: GameCardProps) {
         {/* Cover Image */}
         <div className={`${styles.image} relative overflow-hidden bg-neutral-700`}>
           {game.cover_url ? (
-            <Image
+            <img
               src={game.cover_url}
               alt={game.name}
-              fill
-              unoptimized
-              sizes="(max-width: 640px) 100vw, 240px"
               className="w-full h-full object-cover"
-              style={{ objectFit: "cover" }}
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

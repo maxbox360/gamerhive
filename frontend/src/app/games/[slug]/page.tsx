@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Game } from "@/types";
@@ -34,7 +33,12 @@ export default async function GameDetailPage({
           <div style={{ borderRadius: 12, overflow: "hidden", background: "#1d1d1d" }}>
             {game.cover_url ? (
               <div style={{ position: "relative", width: "100%", aspectRatio: "3 / 4" }}>
-                <Image src={game.cover_url} alt={game.name} fill unoptimized sizes="280px" style={{ objectFit: "cover" }} />
+                <img
+                  src={game.cover_url}
+                  alt={game.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }}
+                  loading="lazy"
+                />
               </div>
             ) : (
               <div style={{ aspectRatio: "3 / 4", display: "grid", placeItems: "center", color: "#999" }}>
