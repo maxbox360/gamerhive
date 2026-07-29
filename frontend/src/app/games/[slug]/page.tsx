@@ -8,10 +8,31 @@ export default async function GameDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const primaryUrl = `${apiUrl}/api/games/games/${encodeURIComponent(slug)}`;
+  const apiCandidates = [
+    process.env.INTERNAL_API_URL,
+    process.env.API_URL,
+    process.env.NEXT_PUBLIC_API_URL,
+    "http://django:8000",
+    "http://localhost:8000",
+  ].filter(Boolean) as string[];
 
-  const res = await fetch(primaryUrl, { cache: "no-store" });
+  let res: Response | null = null;
+  let lastError: unknown = null;
+  for (const apiUrl of apiCandidates) {
+    const base = apiUrl.replace(/\/$/, "");
+    const url = `${base}/api/games/games/${encodeURIComponent(slug)}`;
+    try {
+      res = await fetch(url, { cache: "no-store" });
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  if (!res) {
+    throw new Error(`Failed to fetch game API: ${String(lastError)}`);
+  }
+
   if (res.status === 404) {
     return notFound();
   }

@@ -41,5 +41,12 @@ python manage.py migrate
 echo "Creating superuser if needed..."
 python init_superuser.py
 
+INIT_MARKER=/tmp/gamerhive_init.done
+if [ ! -f "$INIT_MARKER" ]; then
+    echo "Running gamerhive_init..."
+    python manage.py gamerhive_init
+    touch "$INIT_MARKER"
+fi
+
 echo "Starting Django server..."
 exec python manage.py runserver 0.0.0.0:8000
