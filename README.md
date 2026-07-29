@@ -32,116 +32,105 @@ Today, the app includes:
 
 ### Prerequisites
 
-- **Docker & Docker Compose** (for local dev environment)
+- **[Docker Desktop](https://www.docker.com/products/docker-desktop)** (for local dev environment)
 - **Node.js 20+** (for frontend development)
 - **Python 3.12** (for backend development)
 - **Git**
 
-### Getting started
+### Getting started (3 steps)
 
-1. **Clone the repo:**
-   ```bash
-   git clone https://github.com/yourusername/gamerhive.git
-   cd gamerhive
-   ```
+#### 1️⃣ Clone the repo and install Docker
 
-2. **Create `.env` file** — run the setup script (handles IGDB token generation automatically):
+```bash
+git clone https://github.com/yourusername/gamerhive.git
+cd gamerhive
+```
+
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop) if you haven't already.
+
+#### 2️⃣ Set up IGDB API credentials
+
+1. **Create a Twitch account** (if you don't have one): https://www.twitch.tv/login
+2. **Register a developer app** at https://dev.twitch.tv/console/apps
+   - Click "Create Application"
+   - Fill in app name and accept terms
+   - Choose "Application Integration" as category
+   - Click "Create"
+3. **Get your credentials:**
+   - Copy your **Client ID** from the app details
+   - Click "Manage" → generate a **Client Secret**
+4. **Let the setup script handle the rest:**
    ```bash
    python setup_env.py
    ```
+   - Paste your Client ID when prompted
+   - Paste your Client Secret when prompted
+   - The script generates your access token automatically and saves everything to `.env`
 
-   This prompts you for:
-   - Database credentials
-   - Django secret key and superuser account
-   - IGDB Client ID & Secret (gets access token for you)
-   - Redis URL (optional)
+#### 3️⃣ Start the dev environment
 
-   Or create manually with these variables:
-   ```
-   # Database
-   POSTGRES_USER=gamerhive
-   POSTGRES_PASSWORD=your_password
-   POSTGRES_DB=gamerhive
-   DB_HOST=db
-   DB_PORT=5432
+```bash
+docker compose up --build
+```
 
-   # Django
-   DJANGO_SECRET_KEY=your_secret_key
-   DJANGO_SUPERUSER_USERNAME=admin
-   DJANGO_SUPERUSER_EMAIL=admin@example.com
-   DJANGO_SUPERUSER_PASSWORD=your_admin_password
-   DEBUG=True
+This starts:
+- Django API on `http://localhost:8000`
+- Next.js frontend on `http://localhost:3000`
+- PostgreSQL on `localhost:5433`
+- Redis on `localhost:6379`
 
-   # IGDB API (get from https://dev.twitch.tv/console/apps)
-   IGDB_CLIENT_ID=your_client_id
-   IGDB_ACCESS_TOKEN=your_access_token
-
-   # Redis (optional)
-   REDIS_URL=redis://redis:6379/1
-   ```
-
-3. **Start the dev environment:**
-   ```bash
-   docker compose up --build
-   ```
-
-   This starts:
-   - Django API on `http://localhost:8000`
-   - Next.js frontend on `http://localhost:3000`
-   - PostgreSQL on `localhost:5433`
-   - Redis on `localhost:6379`
-
-4. **Verify everything is running:**
-   - Frontend: `http://localhost:3000/games`
-   - API docs: `http://localhost:8000/api/docs`
-   - Django admin: `http://localhost:8000/admin`
+**Verify everything is running:**
+- Frontend: http://localhost:3000/games
+- API docs: http://localhost:8000/api/docs
+- Django admin: http://localhost:8000/admin (use credentials from setup script)
 
 ### Local development (without Docker)
 
 #### Backend (Django)
 
-1. Install Python 3.12 and create a virtual env:
+1. **Create a virtual environment** (Python 3.12+):
    ```bash
    python3.12 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
+   📖 Need help? See [Python venv guide](https://docs.python.org/3/tutorial/venv.html)
 
-2. Install dependencies:
+2. **Install dependencies:**
    ```bash
    pip install -r backend/requirements.txt
    ```
 
-3. Run migrations:
+3. **Run migrations:**
    ```bash
    cd backend
    python manage.py migrate
    ```
 
-4. Create superuser:
+4. **Create superuser:**
    ```bash
    python manage.py createsuperuser
    ```
 
-5. Start the server:
+5. **Start the server:**
    ```bash
    python manage.py runserver
    ```
 
 #### Frontend (Next.js)
 
-1. Install Node 20+ and dependencies:
+1. **Install Node 20+** ([download here](https://nodejs.org/)) and dependencies:
    ```bash
    cd frontend
    npm install --legacy-peer-deps
    ```
 
-2. Set environment variables (`.env.local`):
+2. **Set environment variables** (`.env.local`):
    ```
    NEXT_PUBLIC_API_URL=http://localhost:8000
    INTERNAL_API_URL=http://localhost:8000
    ```
 
-3. Start dev server:
+3. **Start dev server:**
    ```bash
    npm run dev
    ```
