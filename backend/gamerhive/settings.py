@@ -28,8 +28,6 @@ env = environ.Env(
     DEBUG=(bool, False)
 )
 
-DEBUG = os.environ.get("DEBUG", "1") == "1"
-
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-secret-key')
 
 
@@ -167,8 +165,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     }
 # }
 
-# Configure cache backend: use Redis if REDIS_URL is provided, otherwise fall back to locmem
-REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDIS', 'redis://redis:6379/1')
+# Configure cache backend: use Redis only when explicitly configured.
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDIS')
 if REDIS_URL:
     # Use django-redis when available (added to requirements)
     CACHES = {
@@ -188,4 +186,3 @@ else:
             'LOCATION': 'unique-snowflake',
         }
     }
-
