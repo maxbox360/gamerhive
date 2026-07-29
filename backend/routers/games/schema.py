@@ -41,3 +41,31 @@ class PaginatedGameResponse(Schema):
     total_pages: int
 
 
+class GenreListSchema(Schema):
+    id: int
+    name: str
+    slug: str
+
+
+class PlatformListSchema(Schema):
+    id: int
+    name: str
+    slug: str
+    abbreviation: Optional[str]
+
+
+class GameCardSchema(Schema):
+    id: int
+    name: str
+    slug: str
+    cover_url: Optional[str]
+    genres: List[GenreListSchema]
+    platforms: List[PlatformListSchema]
+
+
+class PaginatedGameCardResponse(Schema):
+    items: List[GameCardSchema]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

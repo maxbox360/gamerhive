@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@elastic/eui", "@elastic/datemath"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.igdb.com",
+        pathname: "/igdb/image/upload/**",
+      },
+    ],
+  },
   eslint: {
     // Temporarily ignore ESLint during builds to avoid blocking builds while
     // we resolve new ESLint/plugin config differences after the Next 15 upgrade.

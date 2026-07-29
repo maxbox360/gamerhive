@@ -34,7 +34,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
+for host in ("localhost", "127.0.0.1", "django"):
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 
 # Application definition
@@ -101,6 +104,8 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "password"),
         "HOST": "db",  
         "PORT": os.environ.get("POSTGRES_PORT", "5432"), 
+        # Keep DB connections open for reuse. Tune for your deployment.
+        "CONN_MAX_AGE": int(os.environ.get("CONN_MAX_AGE", 60)),
     }
 }
 

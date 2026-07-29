@@ -43,6 +43,36 @@ class Company(models.Model):
         app_label = 'gamerhive'
 
 
+class BlockedCompany(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    reason = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        app_label = 'gamerhive'
+
+
+class QuarantinedGame(models.Model):
+    igdb_game_id = models.IntegerField(unique=True)
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200)
+    reason = models.CharField(max_length=255)
+    payload = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.igdb_game_id}: {self.name}"
+
+    class Meta:
+        app_label = 'gamerhive'
+
+
 class Game(models.Model):
     igdb_game_id = models.IntegerField(unique=True)
     name = models.CharField(max_length=200)

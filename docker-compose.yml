@@ -1,11 +1,28 @@
 version: "3.9"
 services:
+  django-init:
+    container_name: django-init
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: bash ./django-entrypoint.sh
+    environment:
+      - RUN_DJANGO_SERVER=0
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
   django:
     container_name: django
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: bash ./django-entrypoint.sh
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
       - media_volume:/app/media
@@ -14,19 +31,29 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
+      django-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
 
   frontend:
     container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    command: sh -c "rm -rf .next && npm run dev"
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
     environment:
       # Use localhost for client-side browser requests
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # Use docker DNS for server-side fetches from Next.js
+      - INTERNAL_API_URL=http://django:8000
     depends_on:
       - django
 
@@ -51,3 +78,4 @@ services:
 volumes:
   postgres_data:
   media_volume:
+  frontend_node_modules:

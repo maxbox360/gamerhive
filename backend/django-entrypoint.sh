@@ -41,5 +41,14 @@ python manage.py migrate
 echo "Creating superuser if needed..."
 python init_superuser.py
 
-echo "Starting Django server..."
-exec python manage.py runserver 0.0.0.0:8000
+if ! python manage.py shell -c "from gamerhive.models import Game; import sys; sys.exit(0 if Game.objects.exists() else 1)"; then
+    echo "Running gamerhive_init..."
+    python manage.py gamerhive_init
+fi
+
+if [ "${RUN_DJANGO_SERVER:-1}" = "1" ]; then
+    echo "Starting Django server..."
+    exec python manage.py runserver 0.0.0.0:8000
+fi
+
+echo "Django initialization complete."

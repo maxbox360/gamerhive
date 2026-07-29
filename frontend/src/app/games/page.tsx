@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import GameCard from "@/components/GameCard";
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
+import type { Game, Genre, Platform } from "@/types";
 import {
   EuiFlexGroup,
   EuiFlexItem,
@@ -16,30 +17,8 @@ import {
   EuiPanel,
 } from "@elastic/eui";
 
-interface Genre {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-interface Platform {
-  id: number;
-  name: string;
-  slug: string;
-  abbreviation?: string;
-}
-
-interface Game {
-  id: number;
-  name: string;
-  slug: string;
-  summary?: string;
-  cover_url?: string;
-  genres: Genre[];
-  platforms: Platform[];
-}
-
 export default function GamesPage() {
+  const FILTER_CACHE_KEY = "games-filters-v1";
   // Available filter options
   const [genres, setGenres] = useState<Genre[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -51,24 +30,51 @@ export default function GamesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBaseUrl = apiUrl.replace(/\/$/, "");
 
   // Fetch genres and platforms for dropdowns
   useEffect(() => {
     const fetchFilters = async () => {
+      const cached = window.sessionStorage.getItem(FILTER_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as { genres: Genre[]; platforms: Platform[] };
+          setGenres(parsed.genres);
+          setPlatforms(parsed.platforms);
+          return;
+        } catch {
+          window.sessionStorage.removeItem(FILTER_CACHE_KEY);
+        }
+      }
+
       try {
         const [genresRes, platformsRes] = await Promise.all([
-          fetch(`${apiUrl}/api/games/genres`),
-          fetch(`${apiUrl}/api/games/platforms`),
+          fetch(`${apiBaseUrl}/api/games/genres`),
+          fetch(`${apiBaseUrl}/api/games/platforms`),
         ]);
 
+        let sortedGenres: Genre[] = [];
         if (genresRes.ok) {
           const genresData = await genresRes.json();
-          setGenres(genresData.sort((a: Genre, b: Genre) => a.name.localeCompare(b.name)));
+          sortedGenres = genresData.sort((a: Genre, b: Genre) => a.name.localeCompare(b.name));
+          setGenres(sortedGenres);
         }
 
+        let sortedPlatforms: Platform[] = [];
         if (platformsRes.ok) {
           const platformsData = await platformsRes.json();
-          setPlatforms(platformsData.sort((a: Platform, b: Platform) => a.name.localeCompare(b.name)));
+          sortedPlatforms = platformsData.sort((a: Platform, b: Platform) => a.name.localeCompare(b.name));
+          setPlatforms(sortedPlatforms);
+        }
+
+        if (genresRes.ok && platformsRes.ok) {
+          window.sessionStorage.setItem(
+            FILTER_CACHE_KEY,
+            JSON.stringify({
+              genres: sortedGenres,
+              platforms: sortedPlatforms,
+            })
+          );
         }
       } catch (err) {
         console.error("Failed to fetch filter options:", err);
@@ -76,7 +82,7 @@ export default function GamesPage() {
     };
 
     fetchFilters();
-  }, [apiUrl]);
+  }, [apiBaseUrl]);
 
   // Debounce search input
   useEffect(() => {
@@ -94,9 +100,9 @@ export default function GamesPage() {
       if (genreFilter) params.append("genre", genreFilter);
       if (platformFilter) params.append("platform", platformFilter);
       if (debouncedSearch) params.append("search", debouncedSearch);
-      return `${apiUrl}/api/games/games/?${params}`;
+      return `${apiBaseUrl}/api/games/games/?${params}`;
     },
-    [apiUrl, genreFilter, platformFilter, debouncedSearch]
+    [apiBaseUrl, genreFilter, platformFilter, debouncedSearch]
   );
 
   const { items: games, loading, error, pagination, setPage, refetch } =
@@ -198,15 +204,6 @@ export default function GamesPage() {
 
         <EuiSpacer size="m" />
 
-        {/* Results info */}
-        {!loading && (
-          <EuiText color="subdued" size="s">
-            <p>
-              Showing page {pagination.page} of {pagination.totalPages} ({(pagination.total ?? 0).toLocaleString()} games)
-            </p>
-          </EuiText>
-        )}
-
         <EuiSpacer size="l" />
 
         {/* Loading State */}
@@ -241,7 +238,7 @@ export default function GamesPage() {
             }}
           >
             {games.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard key={game.id} game={game} variant="default" />
             ))}
           </div>
         )}
@@ -273,5 +270,3 @@ export default function GamesPage() {
     </div>
   );
 }
-
-
