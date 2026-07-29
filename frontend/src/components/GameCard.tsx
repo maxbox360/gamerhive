@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 interface Genre {
   id: number;
@@ -34,11 +35,13 @@ export default function GameCard({ game }: GameCardProps) {
         {/* Cover Image */}
         <div className="aspect-[3/4] relative overflow-hidden bg-neutral-700">
           {game.cover_url ? (
-            <img
+            <Image
               src={game.cover_url}
               alt={game.name}
+              fill
+              sizes="(max-width: 640px) 100vw, 240px"
               className="w-full h-full object-cover"
-              loading="lazy"
+              style={{ objectFit: "cover" }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

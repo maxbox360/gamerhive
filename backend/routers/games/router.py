@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from typing import List
 from django.core.paginator import Paginator, EmptyPage
+from django.views.decorators.cache import cache_page
 from .schema import GameSchema, GenreSchema, PlatformSchema, PaginatedGameResponse
 from .models import Game, Genre, Platform
 
@@ -10,12 +11,14 @@ router = Router()
 
 # Game endpoints
 @router.get("/games/", response=PaginatedGameResponse)
+@cache_page(60)  # cache paginated list for 60s (tune as needed or use Redis in prod)
 def list_games(request, genre: str = None, platform: str = None, page: int = 1, page_size: int = 24):
     """
     Get paginated games, optionally filtered by genre or platform name.
     Returns a paginated response with items and pagination metadata.
     """
-    qs = Game.objects.all().prefetch_related("genres", "platforms")
+    # Only select the fields we need for the listing to reduce DB io
+    qs = Game.objects.all().only("id", "name", "slug", "summary", "cover_url", "created_at", "updated_at").prefetch_related("genres", "platforms").order_by("id")
 
     if genre:
         qs = qs.filter(genres__name__icontains=genre)
@@ -40,6 +43,7 @@ def list_games(request, genre: str = None, platform: str = None, page: int = 1, 
     }
 
 @router.get("/games/{slug}", response=GameSchema)
+@cache_page(30)  # cache game detail for 30s; tune or remove if data must be real-time
 def get_game(request, slug: str):
     game = get_object_or_404(Game.objects.prefetch_related("genres", "platforms"), slug=slug)
     return game

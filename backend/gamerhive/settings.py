@@ -103,6 +103,8 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "password"),
         "HOST": "db",  
         "PORT": os.environ.get("POSTGRES_PORT", "5432"), 
+        # Keep DB connections open for reuse. Tune for your deployment.
+        "CONN_MAX_AGE": int(os.environ.get("CONN_MAX_AGE", 60)),
     }
 }
 
@@ -152,3 +154,38 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Caching configuration
+# In production, use a dedicated cache like Redis. Example redis config (uncomment and install django-redis):
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL', 'redis://redis:6379/1'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+#     }
+# }
+
+# Configure cache backend: use Redis if REDIS_URL is provided, otherwise fall back to locmem
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDIS', 'redis://redis:6379/1')
+if REDIS_URL:
+    # Use django-redis when available (added to requirements)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+else:
+    # Fallback/local cache for development
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
+

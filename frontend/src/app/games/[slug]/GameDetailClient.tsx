@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   EuiFlexGroup,
@@ -60,7 +61,9 @@ export default function GameDetailClient({
   const [userRating, setUserRating] = useState<number | null>(null);
 
   // Rating distribution (0.5..5.0) — prefer backend-provided field, otherwise a placeholder
-  const ratingDistribution: Record<string, number> = (game as any)?.rating_distribution || {
+  const ratingDistribution: Record<string, number> = useMemo(
+    () =>
+      (game as any)?.rating_distribution || {
     "5.0": 40,
     "4.5": 10,
     "4.0": 25,
@@ -71,14 +74,15 @@ export default function GameDetailClient({
     "1.5": 2,
     "1.0": 1,
     "0.5": 1,
-  };
+      },
+    [game]
+  );
+  const totalRatings = useMemo(() => Object.values(ratingDistribution).reduce((a, b) => a + b, 0) || 1, [ratingDistribution]);
 
-  const totalRatings = Object.values(ratingDistribution).reduce((a, b) => a + b, 0) || 1;
-
-  const formatPlatformList = (platforms: Platform[] | undefined) => {
+  const formatPlatformList = useCallback((platforms: Platform[] | undefined) => {
     if (!platforms || platforms.length === 0) return "—";
     return platforms.map((p) => p.abbreviation || p.name).join(" • ");
-  };
+  }, []);
 
   // Star rating UI component (supports half-star precision)
   function StarRating({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
@@ -106,7 +110,7 @@ export default function GameDetailClient({
         {[1, 2, 3, 4, 5].map((i) => {
           const fill = Math.max(0, Math.min(1, (activeValue - (i - 1))));
           const pct = Math.round(fill * 100);
-          const clipId = `clip-star-${(initialGame as Game).id}-${i}`;
+          const clipId = `clip-star-${game.id}-${i}`;
           return (
             <div
               key={i}
@@ -189,8 +193,16 @@ export default function GameDetailClient({
               <EuiPanel paddingSize="s" style={{ backgroundColor: "#161616" }}>
                 <div style={{ borderRadius: 6, overflow: "hidden", background: "#0f0f0f" }}>
                   {game.cover_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={game.cover_url} alt={game.name} style={{ width: "100%", height: "auto", display: "block" }} />
+                    // Use Next Image for automatic optimization and lazy loading
+                    <div style={{ position: "relative", width: "100%", height: 420 }}>
+                      <Image
+                        src={game.cover_url}
+                        alt={game.name}
+                        fill
+                        sizes="(max-width: 600px) 100vw, 300px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
                   ) : (
                     <div style={{ width: "100%", height: 420, display: "flex", alignItems: "center", justifyContent: "center", background: "#0b0b0b" }}>
                       <EuiText color="subdued">No cover available</EuiText>
