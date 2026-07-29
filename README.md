@@ -28,6 +28,136 @@ Today, the app includes:
 - **Database:** PostgreSQL
 - **Infra/dev:** Docker Compose
 
+## Setup for collaborators
+
+### Prerequisites
+
+- **Docker & Docker Compose** (for local dev environment)
+- **Node.js 20+** (for frontend development)
+- **Python 3.12** (for backend development)
+- **Git**
+
+### Getting started
+
+1. **Clone the repo:**
+   ```bash
+   git clone https://github.com/yourusername/gamerhive.git
+   cd gamerhive
+   ```
+
+2. **Set up IGDB credentials:**
+   - Go to https://www.twitch.tv/login and sign in (or create an account)
+   - Visit https://dev.twitch.tv/console/apps and create a new application
+   - Get your **Client ID** and generate a **Client Secret**
+   - Clone your `.env` and add these temporarily:
+     ```
+     IGDB_CLIENT_ID=your_client_id
+     IGDB_CLIENT_SECRET=your_client_secret
+     ```
+   - Run the token generator:
+     ```bash
+     python generate_igdb_token.py
+     ```
+   - Copy the **Access Token** output and add it to `.env`:
+     ```
+     IGDB_ACCESS_TOKEN=your_access_token
+     ```
+
+3. **Create `.env` file** with all required variables:
+   ```bash
+   cp .env.example .env  # or create manually with values below
+   ```
+
+   Full list of environment variables:
+   ```
+   # Database
+   POSTGRES_USER=gamerhive
+   POSTGRES_PASSWORD=your_password
+   POSTGRES_DB=gamerhive
+   DB_HOST=db
+   DB_PORT=5432
+
+   # Django
+   DJANGO_SECRET_KEY=your_secret_key
+   DJANGO_SUPERUSER_USERNAME=admin
+   DJANGO_SUPERUSER_EMAIL=admin@example.com
+   DJANGO_SUPERUSER_PASSWORD=your_admin_password
+   DEBUG=True
+
+   # IGDB API (from steps above)
+   IGDB_CLIENT_ID=your_client_id
+   IGDB_ACCESS_TOKEN=your_access_token
+
+   # Redis (optional)
+   REDIS_URL=redis://redis:6379/1
+   ```
+
+3. **Start the dev environment:**
+   ```bash
+   docker compose up --build
+   ```
+
+   This starts:
+   - Django API on `http://localhost:8000`
+   - Next.js frontend on `http://localhost:3000`
+   - PostgreSQL on `localhost:5433`
+   - Redis on `localhost:6379`
+
+4. **Verify everything is running:**
+   - Frontend: `http://localhost:3000/games`
+   - API docs: `http://localhost:8000/api/docs`
+   - Django admin: `http://localhost:8000/admin`
+
+### Local development (without Docker)
+
+#### Backend (Django)
+
+1. Install Python 3.12 and create a virtual env:
+   ```bash
+   python3.12 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+
+3. Run migrations:
+   ```bash
+   cd backend
+   python manage.py migrate
+   ```
+
+4. Create superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+5. Start the server:
+   ```bash
+   python manage.py runserver
+   ```
+
+#### Frontend (Next.js)
+
+1. Install Node 20+ and dependencies:
+   ```bash
+   cd frontend
+   npm install --legacy-peer-deps
+   ```
+
+2. Set environment variables (`.env.local`):
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   INTERNAL_API_URL=http://localhost:8000
+   ```
+
+3. Start dev server:
+   ```bash
+   npm run dev
+   ```
+
 ## Run locally (Docker)
 
 1. Create/update your `.env` with required values (database + Django + IGDB + superuser vars).
