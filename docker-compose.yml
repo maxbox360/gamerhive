@@ -43,6 +43,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    command: sh -c "rm -rf .next && npm run dev"
     ports:
       - "3000:3000"
     volumes:

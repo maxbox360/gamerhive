@@ -2,7 +2,9 @@
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from typing import List
+import random
 from django.core.paginator import Paginator, EmptyPage
+from django.db.models import Prefetch
 from .schema import (
     GameSchema,
     GenreListSchema,
@@ -31,7 +33,13 @@ def list_games(
     qs = (
         Game.objects.all()
         .only("id", "name", "slug", "cover_url")
-        .prefetch_related("genres", "platforms")
+        .prefetch_related(
+            Prefetch("genres", queryset=Genre.objects.only("id", "name", "slug")),
+            Prefetch(
+                "platforms",
+                queryset=Platform.objects.only("id", "name", "slug", "abbreviation"),
+            ),
+        )
         .order_by("id")
     )
 
@@ -44,9 +52,27 @@ def list_games(
     if search:
         qs = qs.filter(name__icontains=search)
 
-    qs = qs.distinct()
+    if genre or platform:
+        qs = qs.distinct()
 
     paginator = Paginator(qs, page_size)
+    if (
+        int(page) == 1
+        and not genre
+        and not platform
+        and not search
+        and paginator.count > page_size
+    ):
+        start = random.randint(0, paginator.count - page_size)
+        items = list(qs[start:start + page_size])
+        return {
+            "items": items,
+            "total": paginator.count,
+            "page": 1,
+            "page_size": int(page_size),
+            "total_pages": paginator.num_pages,
+        }
+
     try:
         page_obj = paginator.page(page)
     except EmptyPage:

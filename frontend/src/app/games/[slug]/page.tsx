@@ -12,9 +12,10 @@ export default async function GameDetailPage({
     process.env.INTERNAL_API_URL,
     process.env.API_URL,
     process.env.NEXT_PUBLIC_API_URL,
-    "http://django:8000",
-    "http://localhost:8000",
   ].filter(Boolean) as string[];
+  if (apiCandidates.length === 0) {
+    apiCandidates.push("http://localhost:8000");
+  }
 
   let res: Response | null = null;
   let lastError: unknown = null;

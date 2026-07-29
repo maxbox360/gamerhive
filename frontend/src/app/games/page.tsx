@@ -204,15 +204,6 @@ export default function GamesPage() {
 
         <EuiSpacer size="m" />
 
-        {/* Results info */}
-        {!loading && (
-          <EuiText color="subdued" size="s">
-            <p>
-              Showing page {pagination.page} of {pagination.totalPages} ({(pagination.total ?? 0).toLocaleString()} games)
-            </p>
-          </EuiText>
-        )}
-
         <EuiSpacer size="l" />
 
         {/* Loading State */}
