@@ -18,6 +18,7 @@ import {
 } from "@elastic/eui";
 
 export default function GamesPage() {
+  const FILTER_CACHE_KEY = "games-filters-v1";
   // Available filter options
   const [genres, setGenres] = useState<Genre[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -34,20 +35,46 @@ export default function GamesPage() {
   // Fetch genres and platforms for dropdowns
   useEffect(() => {
     const fetchFilters = async () => {
+      const cached = window.sessionStorage.getItem(FILTER_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as { genres: Genre[]; platforms: Platform[] };
+          setGenres(parsed.genres);
+          setPlatforms(parsed.platforms);
+          return;
+        } catch {
+          window.sessionStorage.removeItem(FILTER_CACHE_KEY);
+        }
+      }
+
       try {
         const [genresRes, platformsRes] = await Promise.all([
           fetch(`${apiBaseUrl}/api/games/genres`),
           fetch(`${apiBaseUrl}/api/games/platforms`),
         ]);
 
+        let sortedGenres: Genre[] = [];
         if (genresRes.ok) {
           const genresData = await genresRes.json();
-          setGenres(genresData.sort((a: Genre, b: Genre) => a.name.localeCompare(b.name)));
+          sortedGenres = genresData.sort((a: Genre, b: Genre) => a.name.localeCompare(b.name));
+          setGenres(sortedGenres);
         }
 
+        let sortedPlatforms: Platform[] = [];
         if (platformsRes.ok) {
           const platformsData = await platformsRes.json();
-          setPlatforms(platformsData.sort((a: Platform, b: Platform) => a.name.localeCompare(b.name)));
+          sortedPlatforms = platformsData.sort((a: Platform, b: Platform) => a.name.localeCompare(b.name));
+          setPlatforms(sortedPlatforms);
+        }
+
+        if (genresRes.ok && platformsRes.ok) {
+          window.sessionStorage.setItem(
+            FILTER_CACHE_KEY,
+            JSON.stringify({
+              genres: sortedGenres,
+              platforms: sortedPlatforms,
+            })
+          );
         }
       } catch (err) {
         console.error("Failed to fetch filter options:", err);

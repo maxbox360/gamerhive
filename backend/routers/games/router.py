@@ -3,26 +3,48 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from typing import List
 from django.core.paginator import Paginator, EmptyPage
-from .schema import GameSchema, GenreSchema, PlatformSchema, PaginatedGameResponse
+from .schema import (
+    GameSchema,
+    GenreListSchema,
+    PlatformListSchema,
+    PaginatedGameCardResponse,
+)
 from .models import Game, Genre, Platform
 
 router = Router()
 
 # Game endpoints
-@router.get("/games/", response=PaginatedGameResponse)
-def list_games(request, genre: str = None, platform: str = None, page: int = 1, page_size: int = 24):
+@router.get("/games/", response=PaginatedGameCardResponse)
+def list_games(
+    request,
+    genre: str = None,
+    platform: str = None,
+    search: str = None,
+    page: int = 1,
+    page_size: int = 24,
+):
     """
     Get paginated games, optionally filtered by genre or platform name.
     Returns a paginated response with items and pagination metadata.
     """
-    # Only select the fields we need for the listing to reduce DB io
-    qs = Game.objects.all().only("id", "name", "slug", "summary", "cover_url", "created_at", "updated_at").prefetch_related("genres", "platforms").order_by("id")
+    page_size = max(1, min(int(page_size), 48))
+    qs = (
+        Game.objects.all()
+        .only("id", "name", "slug", "summary", "cover_url")
+        .prefetch_related("genres", "platforms")
+        .order_by("id")
+    )
 
     if genre:
         qs = qs.filter(genres__name__icontains=genre)
 
     if platform:
         qs = qs.filter(platforms__name__icontains=platform)
+
+    if search:
+        qs = qs.filter(name__icontains=search)
+
+    qs = qs.distinct()
 
     paginator = Paginator(qs, page_size)
     try:
@@ -46,11 +68,11 @@ def get_game(request, slug: str):
     return game
 
 # Genre endpoints
-@router.get("/genres", response=List[GenreSchema])
+@router.get("/genres", response=List[GenreListSchema])
 def list_genres(request):
-    return Genre.objects.all()
+    return Genre.objects.only("id", "name", "slug").order_by("name")
 
 # Platform endpoints
-@router.get("/platforms", response=List[PlatformSchema])
+@router.get("/platforms", response=List[PlatformListSchema])
 def list_platforms(request):
-    return Platform.objects.all()
+    return Platform.objects.only("id", "name", "slug", "abbreviation").order_by("name")
