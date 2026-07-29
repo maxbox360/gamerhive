@@ -1,11 +1,28 @@
 version: "3.9"
 services:
+  django-init:
+    container_name: django-init
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: bash ./django-entrypoint.sh
+    environment:
+      - RUN_DJANGO_SERVER=0
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
   django:
     container_name: django
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: bash ./django-entrypoint.sh
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
       - media_volume:/app/media
@@ -14,8 +31,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
+      django-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
 
   frontend:
     container_name: frontend

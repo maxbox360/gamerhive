@@ -22,8 +22,11 @@ export default async function GameDetailPage({
     const base = apiUrl.replace(/\/$/, "");
     const url = `${base}/api/games/games/${encodeURIComponent(slug)}`;
     try {
-      res = await fetch(url, { cache: "no-store" });
-      break;
+      const candidateRes = await fetch(url, { cache: "no-store" });
+      res = candidateRes;
+      if (candidateRes.ok || candidateRes.status === 404) {
+        break;
+      }
     } catch (err) {
       lastError = err;
     }

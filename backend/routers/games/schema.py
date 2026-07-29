@@ -58,7 +58,6 @@ class GameCardSchema(Schema):
     id: int
     name: str
     slug: str
-    summary: Optional[str]
     cover_url: Optional[str]
     genres: List[GenreListSchema]
     platforms: List[PlatformListSchema]
@@ -70,4 +69,3 @@ class PaginatedGameCardResponse(Schema):
     page: int
     page_size: int
     total_pages: int
-

@@ -30,7 +30,7 @@ def list_games(
     page_size = max(1, min(int(page_size), 48))
     qs = (
         Game.objects.all()
-        .only("id", "name", "slug", "summary", "cover_url")
+        .only("id", "name", "slug", "cover_url")
         .prefetch_related("genres", "platforms")
         .order_by("id")
     )
