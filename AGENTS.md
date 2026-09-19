@@ -229,6 +229,20 @@ Avoid adding dependencies for trivial functionality.
 
 ---
 
+# Pull Requests and Summaries
+
+When preparing a PR summary for GitHub, keep it concise and copy-paste ready.
+
+Use a short two-sentence high-level overview followed by a small bullet list with a maximum of five items.
+
+Each bullet should be a single sentence describing a discrete change or validation result.
+
+Do not include long explanations, nested bullets, or markdown tables.
+
+Keep the wording concise and suitable for direct GitHub paste.
+
+---
+
 # Git & File Safety
 
 Do not:
