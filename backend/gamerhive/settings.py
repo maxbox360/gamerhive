@@ -14,6 +14,7 @@ import environ
 import os
 
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,6 +28,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, False)
 )
+
+
+def csv_env(name, default=""):
+    return [value.strip() for value in os.environ.get(name, default).split(",") if value.strip()]
+
+
+def normalize_origin(value):
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-secret-key')
 
@@ -66,11 +78,44 @@ MIDDLEWARE = [
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://frontend:3000",
+    origin
+    for origin in (
+        normalize_origin(value)
+        for value in csv_env(
+            "CORS_ALLOWED_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000",
+        )
+    )
+    if origin
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+frontend_origins = {
+    origin
+    for origin in (
+        normalize_origin(value)
+        for value in (
+            *CORS_ALLOWED_ORIGINS,
+            *csv_env("CSRF_TRUSTED_ORIGINS"),
+            os.environ.get("FRONTEND_ORIGIN", ""),
+            os.environ.get("NEXT_PUBLIC_APP_URL", ""),
+            os.environ.get("NEXT_PUBLIC_WEB_URL", ""),
+        )
+    )
+    if origin
+}
+
+CSRF_TRUSTED_ORIGINS = sorted(frontend_origins)
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = not DEBUG
+
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = not DEBUG
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 ROOT_URLCONF = 'gamerhive.urls'
 

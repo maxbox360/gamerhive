@@ -54,7 +54,7 @@ export function usePaginatedFetch<T>(
 
     try {
       const url = buildUrl(page, pageSize);
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: "include" });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.status}`);
