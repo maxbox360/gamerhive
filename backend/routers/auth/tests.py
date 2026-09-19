@@ -67,7 +67,7 @@ class RegistrationEndpointTests(TestCase):
         User.objects.create_user(
             username=self.payload["username"],
             email=self.payload["email"],
-            password="AnotherPass123!",
+            password=self.payload["password"],
         )
 
         username_dup = dict(self.payload)
@@ -87,4 +87,76 @@ class RegistrationEndpointTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+        self.assertIn("detail", response.json())
+
+
+class LoginEndpointTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="existinguser",
+            email="existinguser@example.com",
+            password="StrongPass123!",
+        )
+
+    def test_successful_login_sets_session_and_returns_safe_user_data(self):
+        response = self.client.post(
+            "/api/auth/login",
+            data=json.dumps({
+                "username": "existinguser",
+                "password": "StrongPass123!",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], self.user.id)
+        self.assertEqual(data["username"], self.user.username)
+        self.assertEqual(data["email"], self.user.email)
+        self.assertNotIn("password", data)
+        self.assertNotIn("password_hash", data)
+        self.assertIn("_auth_user_id", self.client.session)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
+        follow_up = self.client.get("/api/users/")
+        self.assertEqual(follow_up.status_code, 200)
+        self.assertEqual(follow_up.wsgi_request.user, self.user)
+
+    def test_incorrect_password_is_rejected_without_sensitive_details(self):
+        response = self.client.post(
+            "/api/auth/login",
+            data=json.dumps({
+                "username": "existinguser",
+                "password": "WrongPassword123!",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("detail", response.json())
+        self.assertNotIn("existinguser@example.com", response.text)
+        self.assertNotIn("password", response.text.lower())
+
+    def test_unknown_username_is_rejected_without_sensitive_details(self):
+        response = self.client.post(
+            "/api/auth/login",
+            data=json.dumps({
+                "username": "missinguser",
+                "password": "StrongPass123!",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("detail", response.json())
+        self.assertNotIn("missinguser@example.com", response.text)
+
+    def test_missing_credentials_are_rejected(self):
+        response = self.client.post(
+            "/api/auth/login",
+            data=json.dumps({"username": "", "password": ""}),
+            content_type="application/json",
+        )
+
+        self.assertIn(response.status_code, (400, 422))
         self.assertIn("detail", response.json())
