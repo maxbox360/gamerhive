@@ -1,0 +1,90 @@
+import json
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+User = get_user_model()
+
+
+class RegistrationEndpointTests(TestCase):
+    def setUp(self):
+        self.payload = {
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password": "StrongPass123!",
+            "first_name": "New",
+            "last_name": "User",
+        }
+
+    def test_successful_registration_creates_user_and_logs_in(self):
+        response = self.client.post(
+            "/api/auth/register",
+            data=json.dumps(self.payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data["username"], self.payload["username"])
+        self.assertEqual(data["email"], self.payload["email"])
+        self.assertEqual(data["first_name"], self.payload["first_name"])
+        self.assertEqual(data["last_name"], self.payload["last_name"])
+        self.assertNotIn("password", data)
+        self.assertNotIn("password_hash", data)
+
+        user = User.objects.get(username=self.payload["username"])
+        self.assertTrue(user.check_password(self.payload["password"]))
+        self.assertNotEqual(user.password, self.payload["password"])
+        self.assertIn("_auth_user_id", self.client.session)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+
+    def test_missing_required_fields_are_validated(self):
+        for field in ("username", "email", "password"):
+            payload = dict(self.payload)
+            payload.pop(field)
+            response = self.client.post(
+                "/api/auth/register",
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+            self.assertIn(response.status_code, (400, 422))
+            self.assertIn("detail", response.json())
+
+    def test_invalid_password_is_rejected(self):
+        payload = dict(self.payload)
+        payload["password"] = "123"
+
+        response = self.client.post(
+            "/api/auth/register",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertIn(response.status_code, (400, 422))
+        self.assertIn("detail", response.json())
+
+    def test_duplicate_username_and_email_are_rejected(self):
+        User.objects.create_user(
+            username=self.payload["username"],
+            email=self.payload["email"],
+            password="AnotherPass123!",
+        )
+
+        username_dup = dict(self.payload)
+        response = self.client.post(
+            "/api/auth/register",
+            data=json.dumps(username_dup),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("detail", response.json())
+
+        email_dup = dict(self.payload)
+        email_dup["username"] = "anotheruser"
+        response = self.client.post(
+            "/api/auth/register",
+            data=json.dumps(email_dup),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("detail", response.json())
