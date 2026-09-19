@@ -1,6 +1,6 @@
 from typing import Optional
 
-from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
@@ -24,6 +24,10 @@ class RegisterUserInput(Schema):
 class LoginUserInput(Schema):
     username: str
     password: str
+
+
+class LogoutResponse(Schema):
+    success: bool
 
 
 class UserPublicSchema(Schema):
@@ -94,3 +98,9 @@ def login_user(request, payload: LoginUserInput):
 
     login(request, user)
     return user
+
+
+@router.post("/logout", response={200: LogoutResponse})
+def logout_user(request):
+    logout(request)
+    return {"success": True}

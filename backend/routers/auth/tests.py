@@ -160,3 +160,35 @@ class LoginEndpointTests(TestCase):
 
         self.assertIn(response.status_code, (400, 422))
         self.assertIn("detail", response.json())
+
+
+class LogoutEndpointTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="logoutuser",
+            email="logoutuser@example.com",
+            password="StrongPass123!",
+        )
+
+    def test_successful_logout_clears_authenticated_session(self):
+        self.client.force_login(self.user)
+        pre_logout = self.client.get("/api/users/")
+        self.assertEqual(pre_logout.status_code, 200)
+        self.assertEqual(pre_logout.wsgi_request.user, self.user)
+
+        response = self.client.post("/api/auth/logout", content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": True})
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        post_logout = self.client.get("/api/users/")
+        self.assertEqual(post_logout.status_code, 200)
+        self.assertFalse(post_logout.wsgi_request.user.is_authenticated)
+
+    def test_unauthenticated_logout_returns_success(self):
+        response = self.client.post("/api/auth/logout", content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": True})
+        self.assertNotIn("_auth_user_id", self.client.session)
