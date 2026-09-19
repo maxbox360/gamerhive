@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 
 User = get_user_model()
 
@@ -160,3 +160,48 @@ class LoginEndpointTests(TestCase):
 
         self.assertIn(response.status_code, (400, 422))
         self.assertIn("detail", response.json())
+
+
+class LogoutEndpointTests(TestCase):
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+        self.user = User.objects.create_user(
+            username="logoutuser",
+            email="logoutuser@example.com",
+            password="StrongPass123!",
+        )
+
+    def _logout(self):
+        csrf_response = self.client.get("/api/auth/csrf")
+        self.assertEqual(csrf_response.status_code, 200)
+        csrf_token = csrf_response.json()["csrfToken"]
+
+        return self.client.post(
+            "/api/auth/logout",
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+
+
+    def test_successful_logout_clears_authenticated_session(self):
+        self.client.force_login(self.user)
+        pre_logout = self.client.get("/api/users/")
+        self.assertEqual(pre_logout.status_code, 200)
+        self.assertEqual(pre_logout.wsgi_request.user, self.user)
+
+        response = self._logout()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": True})
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        post_logout = self.client.get("/api/users/")
+        self.assertEqual(post_logout.status_code, 200)
+        self.assertFalse(post_logout.wsgi_request.user.is_authenticated)
+
+    def test_unauthenticated_logout_returns_success(self):
+        response = self._logout()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": True})
+        self.assertNotIn("_auth_user_id", self.client.session)
