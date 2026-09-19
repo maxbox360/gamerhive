@@ -158,6 +158,8 @@ npm run dev
 
 Visit http://localhost:3000 — it should connect to your local Django API at `http://localhost:8000`.
 
+For session-authenticated API work, keep the frontend on `http://localhost:3000` and the backend on `http://localhost:8000`. The browser requests must include cookies, and unsafe requests will need a CSRF token fetched from `GET /api/auth/csrf` and sent back in the `X-CSRFToken` header.
+
 ---
 
 ## Troubleshooting

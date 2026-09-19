@@ -49,8 +49,8 @@ export default function GamesPage() {
 
       try {
         const [genresRes, platformsRes] = await Promise.all([
-          fetch(`${apiBaseUrl}/api/games/genres`),
-          fetch(`${apiBaseUrl}/api/games/platforms`),
+          fetch(`${apiBaseUrl}/api/games/genres`, { credentials: "include" }),
+          fetch(`${apiBaseUrl}/api/games/platforms`, { credentials: "include" }),
         ]);
 
         let sortedGenres: Genre[] = [];
