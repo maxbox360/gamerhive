@@ -1,5 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from gamerhive.api import api
+
+
+@api.post("/test/csrf-probe", tags=["Tests"])
+def csrf_probe(request):
+    return {"authenticated": request.user.is_authenticated}
 
 
 class SessionAuthenticationConfigurationTests(TestCase):
@@ -25,3 +31,28 @@ class SessionAuthenticationConfigurationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.wsgi_request.user, self.user)
+
+    def test_unsafe_requests_require_csrf_token(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            "/api/test/csrf-probe",
+            data="{}",
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_unsafe_requests_accept_valid_csrf_token(self):
+        self.client.force_login(self.user)
+        csrf_response = self.client.get("/api/auth/csrf")
+
+        response = self.client.post(
+            "/api/test/csrf-probe",
+            data="{}",
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf_response.json()["csrfToken"],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"authenticated": True})

@@ -7,7 +7,8 @@ from routers.users.router import router as users_router
 api = NinjaAPI(
     title="GamerHive API",
     version="1.0.0",
-    description="API for accessing games, genres, and platforms"
+    description="API for accessing games, genres, and platforms",
+    csrf=True,
 )
 
 api.add_router("/games/", games_router)
