@@ -1,10 +1,10 @@
 from typing import Optional
 
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
 from django.core.validators import validate_email
+from django.db import IntegrityError
 from ninja import Router, Schema
 from ninja.errors import HttpError
 
@@ -19,6 +19,11 @@ class RegisterUserInput(Schema):
     password: str
     first_name: Optional[str] = ""
     last_name: Optional[str] = ""
+
+
+class LoginUserInput(Schema):
+    username: str
+    password: str
 
 
 class UserPublicSchema(Schema):
@@ -38,7 +43,6 @@ def register_user(request, payload: RegisterUserInput):
 
     if not username:
         raise HttpError(400, "username is required.")
-
     if not email:
         raise HttpError(400, "email is required.")
 
@@ -71,6 +75,22 @@ def register_user(request, payload: RegisterUserInput):
         )
     except IntegrityError:
         raise HttpError(400, "A user with that username or email already exists.")
+
+    login(request, user)
+    return user
+
+
+@router.post("/login", response={200: UserPublicSchema, 400: dict, 401: dict})
+def login_user(request, payload: LoginUserInput):
+    username = (payload.username or "").strip()
+    password = payload.password or ""
+
+    if not username or not password:
+        raise HttpError(400, "username and password are required.")
+
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        raise HttpError(401, "Invalid credentials.")
 
     login(request, user)
     return user
