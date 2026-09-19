@@ -35,7 +35,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-secret-key')
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
-for host in ("localhost", "127.0.0.1", "django"):
+for host in ("localhost", "127.0.0.1", "django", "localhost:8000", "django:8000"):
     if host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(host)
 
