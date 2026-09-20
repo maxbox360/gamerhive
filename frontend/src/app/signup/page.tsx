@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import {
   EuiButton,
   EuiCallOut,
@@ -181,12 +180,6 @@ export default function SignupPage() {
           </EuiButton>
         </EuiForm>
 
-        <EuiSpacer />
-        <EuiText color="subdued" size="s">
-          <p>
-            Already have an account? <Link href="/signin" style={{ color: "#FFD700" }}>Sign in</Link>
-          </p>
-        </EuiText>
       </EuiPanel>
     </div>
   );

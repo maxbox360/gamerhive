@@ -265,6 +265,8 @@ Do not:
 * Delete unrelated files.
 * Rewrite unrelated code.
 * Overwrite user work without warning.
+* Commit directly to `main`; always work on a feature/fix branch and merge through a pull request.
+* Merge or push to `main` unless explicitly instructed by the user.
 * Commit secrets or credentials.
 * Create git commits unless explicitly requested.
 
