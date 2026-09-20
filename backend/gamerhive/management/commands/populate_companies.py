@@ -20,14 +20,19 @@ class Command(BaseCommand):
         self.igdb = IGDBWrapper(CLIENT_ID, ACCESS_TOKEN)
 
         self.stdout.write("Fetching all game IDs...")
-        game_ids = list(Game.objects.exclude(igdb_game_id__isnull=True)
-                        .values_list("igdb_game_id", flat=True))
+        game_ids = list(
+            Game.objects.exclude(igdb_game_id__isnull=True).values_list(
+                "igdb_game_id", flat=True
+            )
+        )
         total_games = len(game_ids)
         self.stdout.write(f"Found {total_games} games to process.")
 
         self.stdout.write("Collecting unique company IDs from games in batches...")
         company_ids = self.collect_company_ids(game_ids)
-        self.stdout.write(self.style.NOTICE(f"Found {len(company_ids)} unique companies to fetch."))
+        self.stdout.write(
+            self.style.NOTICE(f"Found {len(company_ids)} unique companies to fetch.")
+        )
 
         self.populate_companies(company_ids)
         self.stdout.write(self.style.SUCCESS("Finished populating company data!"))
@@ -45,7 +50,7 @@ class Command(BaseCommand):
         total_games = len(game_ids)
 
         for batch_start in range(0, total_games, self.BATCH_SIZE):
-            batch = game_ids[batch_start:batch_start + self.BATCH_SIZE]
+            batch = game_ids[batch_start : batch_start + self.BATCH_SIZE]
             query = f"fields game, company; where game = ({', '.join(map(str, batch))}); limit {self.BATCH_SIZE};"
             response = self.igdb.api_request("involved_companies", query)
             data = self._decode_response(response)
@@ -53,7 +58,9 @@ class Command(BaseCommand):
             for ic in data:
                 company_ids.add(ic["company"])
 
-            self.stdout.write(f"Processed games {batch_start + 1}-{batch_start + len(batch)} / {total_games}")
+            self.stdout.write(
+                f"Processed games {batch_start + 1}-{batch_start + len(batch)} / {total_games}"
+            )
 
             # optional: gentle sleep to avoid hitting rate limits
             sleep(0.1)
@@ -72,9 +79,11 @@ class Command(BaseCommand):
         self.stdout.write(f"Fetching and saving {total_companies} new companies...")
 
         for batch_start in range(0, total_companies, self.BATCH_SIZE):
-            batch = new_company_ids[batch_start:batch_start + self.BATCH_SIZE]
-            self.stdout.write(f"Fetching batch {batch_start // self.BATCH_SIZE + 1} "
-                              f"({len(batch)} companies)...")
+            batch = new_company_ids[batch_start : batch_start + self.BATCH_SIZE]
+            self.stdout.write(
+                f"Fetching batch {batch_start // self.BATCH_SIZE + 1} "
+                f"({len(batch)} companies)..."
+            )
 
             companies = self.get_companies_by_ids(batch)
             for c in companies:
@@ -98,7 +107,9 @@ class Command(BaseCommand):
         response = self.igdb.api_request("companies", query)
         data = self._decode_response(response)
         if not data:
-            self.stdout.write(f"Warning: no company data returned for batch {company_ids[:5]}...")
+            self.stdout.write(
+                f"Warning: no company data returned for batch {company_ids[:5]}..."
+            )
         return data
 
     def _decode_response(self, response):

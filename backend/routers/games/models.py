@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Genre(models.Model):
     igdb_genre_id = models.IntegerField(unique=True)
     name = models.CharField(max_length=100)
@@ -10,9 +11,9 @@ class Genre(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"
 
 
 class Platform(models.Model):
@@ -28,9 +29,10 @@ class Platform(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"
+
 
 class Company(models.Model):
     igdb_company_id = models.IntegerField(unique=True)
@@ -38,9 +40,9 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"
 
 
 class BlockedCompany(models.Model):
@@ -54,7 +56,7 @@ class BlockedCompany(models.Model):
         return self.name
 
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"
 
 
 class QuarantinedGame(models.Model):
@@ -70,7 +72,7 @@ class QuarantinedGame(models.Model):
         return f"{self.igdb_game_id}: {self.name}"
 
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"
 
 
 class Game(models.Model):
@@ -84,8 +86,12 @@ class Game(models.Model):
     cover_url = models.URLField(max_length=500, blank=True, null=True)
     screenshots = models.JSONField(blank=True, null=True)
     websites = models.JSONField(blank=True, null=True)
-    publishers = models.ManyToManyField(Company, related_name="published_games", blank=True)
-    developers = models.ManyToManyField(Company, related_name="developed_games", blank=True)
+    publishers = models.ManyToManyField(
+        Company, related_name="published_games", blank=True
+    )
+    developers = models.ManyToManyField(
+        Company, related_name="developed_games", blank=True
+    )
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
 
@@ -94,6 +100,6 @@ class Game(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
-        app_label = 'gamerhive'
+        app_label = "gamerhive"

@@ -12,19 +12,20 @@ print(f"CLIENT_ID: {CLIENT_ID}")
 CLIENT_SECRET = os.getenv("IGDB_CLIENT_SECRET")
 print(f"CLIENT_SECRET: {os.getenv('CLIENT_SECRET') is not None}")
 
+
 def generate_token():
     url = "https://id.twitch.tv/oauth2/token"
     payload = {
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
-        "grant_type": "client_credentials"
+        "grant_type": "client_credentials",
     }
 
     try:
         response = requests.post(url, data=payload)
         response.raise_for_status()  # Raise an error for bad status codes
         data = response.json()
-        
+
         # Extract the access token
         access_token = data.get("access_token")
         expires_in = data.get("expires_in")  # Token validity in seconds
@@ -39,6 +40,7 @@ def generate_token():
 
     except requests.exceptions.RequestException as e:
         print(f"Error generating token: {e}")
+
 
 if __name__ == "__main__":
     generate_token()

@@ -65,4 +65,3 @@ For a clean reinstall (if things are broken):
 rm -rf node_modules package-lock.json
 npm install
 ```
-

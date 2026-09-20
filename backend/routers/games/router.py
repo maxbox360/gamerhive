@@ -15,6 +15,7 @@ from .models import Game, Genre, Platform
 
 router = Router()
 
+
 # Game endpoints
 @router.get("/games/", response=PaginatedGameCardResponse)
 def list_games(
@@ -64,7 +65,7 @@ def list_games(
         and paginator.count > page_size
     ):
         start = random.randint(0, paginator.count - page_size)
-        items = list(qs[start:start + page_size])
+        items = list(qs[start : start + page_size])
         return {
             "items": items,
             "total": paginator.count,
@@ -88,15 +89,20 @@ def list_games(
         "total_pages": paginator.num_pages,
     }
 
+
 @router.get("/games/{slug}", response=GameSchema)
 def get_game(request, slug: str):
-    game = get_object_or_404(Game.objects.prefetch_related("genres", "platforms"), slug=slug)
+    game = get_object_or_404(
+        Game.objects.prefetch_related("genres", "platforms"), slug=slug
+    )
     return game
+
 
 # Genre endpoints
 @router.get("/genres", response=List[GenreListSchema])
 def list_genres(request):
     return Genre.objects.only("id", "name", "slug").order_by("name")
+
 
 # Platform endpoints
 @router.get("/platforms", response=List[PlatformListSchema])

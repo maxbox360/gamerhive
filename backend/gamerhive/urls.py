@@ -4,5 +4,5 @@ from gamerhive.api import api  # your NinjaAPI instance
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", api.urls), 
+    path("api/", api.urls),
 ]
