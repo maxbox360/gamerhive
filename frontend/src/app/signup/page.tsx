@@ -12,7 +12,7 @@ import {
   EuiText,
   EuiTitle,
 } from "@elastic/eui";
-import { registerUser } from "@/lib/auth";
+import { registerUser } from "@/utils/auth";
 
 type FormValues = {
   username: string;
