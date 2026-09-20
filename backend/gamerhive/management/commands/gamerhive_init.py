@@ -7,8 +7,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write("Starting GamerHive initialization...")
+        self.stdout.write("Refreshing IGDB token...")
+        call_command("refresh_igdb_token")
 
+        self.stdout.write("Populating genres...")
         call_command("populate_genres")
+        self.stdout.write("Populating platforms...")
         call_command("populate_platforms")
+        self.stdout.write("Populating games...")
         call_command("populate_games")
+        self.stdout.write("Populating companies...")
         call_command("populate_companies")
+        self.stdout.write(self.style.SUCCESS("GamerHive initialization complete."))
