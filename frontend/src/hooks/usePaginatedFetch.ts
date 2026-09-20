@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { PaginatedResponse, PaginationState } from "@/types/pagination";
 
 interface UsePaginatedFetchOptions {
@@ -42,6 +42,7 @@ export function usePaginatedFetch<T>(
   const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const latestRequestId = useRef(0);
 
   // Reset to page 1 when dependencies or pageSize change (e.g. a responsive
   // page size), so a stale page number can't request out-of-range or
@@ -51,6 +52,7 @@ export function usePaginatedFetch<T>(
   }, [pageSize, ...dependencies]);
 
   const fetchData = useCallback(async () => {
+    const requestId = ++latestRequestId.current;
     setLoading(true);
     setError(null);
 
@@ -63,14 +65,22 @@ export function usePaginatedFetch<T>(
       }
 
       const data: PaginatedResponse<T> = await response.json();
+      if (requestId !== latestRequestId.current) {
+        return;
+      }
       setItems(data.items);
       setTotalPages(data.total_pages);
       setTotal(data.total);
     } catch (err) {
+      if (requestId !== latestRequestId.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Could not reach API");
       setItems([]);
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) {
+        setLoading(false);
+      }
     }
   }, [page, pageSize, buildUrl, ...dependencies]);
 
