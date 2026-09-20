@@ -14,6 +14,7 @@ import {
   EuiText,
   EuiTitle,
 } from "@elastic/eui";
+import { useAuth } from "@/contexts/AuthContext";
 import { loginUser } from "@/utils/auth";
 
 type FormValues = {
@@ -28,6 +29,7 @@ const initialValues: FormValues = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [values, setValues] = useState<FormValues>(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +65,7 @@ export default function LoginPage() {
         username: values.username.trim(),
         password: values.password,
       });
+      await refreshUser();
       router.push("/games");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed. Please try again.");
