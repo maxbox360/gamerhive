@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from igdb.wrapper import IGDBWrapper
 
 from gamerhive.environment import Settings
+from gamerhive.http_helpers import igdb_request_with_retry
 from gamerhive.models import (
     BlockedCompany,
     Company,
@@ -186,7 +187,9 @@ class Command(BaseCommand):
             query = game_query_template.format(
                 limit=settings.igdb_batch_size, offset=offset
             )
-            response = self.igdb.api_request("games", query)
+            response = igdb_request_with_retry(
+                self.igdb.api_request, "games", query, logger=self.stdout
+            )
             data = self._decode_response(response)
 
             for g in data:

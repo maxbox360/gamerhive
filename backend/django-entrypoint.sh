@@ -36,14 +36,22 @@ if ! python manage.py makemigrations --check --dry-run; then
     python manage.py makemigrations
 fi
 
+echo "Running database migrations..."
 python manage.py migrate
 
 echo "Creating superuser if needed..."
 python init_superuser.py
 
+echo "Running gamerhive_init..."
+if ! python manage.py gamerhive_init --verbosity 2; then
+    echo "gamerhive_init failed."
+    exit 1
+fi
+
 if ! python manage.py shell -c "from gamerhive.models import Game; import sys; sys.exit(0 if Game.objects.exists() else 1)"; then
-    echo "Running gamerhive_init..."
-    python manage.py gamerhive_init
+    echo "No games found after gamerhive_init."
+else
+    echo "Game data present after gamerhive_init."
 fi
 
 if [ "${RUN_DJANGO_SERVER:-1}" = "1" ]; then

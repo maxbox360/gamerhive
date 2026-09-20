@@ -5,6 +5,7 @@ import json
 from time import sleep
 
 from gamerhive.models import Game, Company
+from gamerhive.http_helpers import igdb_request_with_retry
 
 CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("IGDB_ACCESS_TOKEN")
@@ -52,7 +53,9 @@ class Command(BaseCommand):
         for batch_start in range(0, total_games, self.BATCH_SIZE):
             batch = game_ids[batch_start : batch_start + self.BATCH_SIZE]
             query = f"fields game, company; where game = ({', '.join(map(str, batch))}); limit {self.BATCH_SIZE};"
-            response = self.igdb.api_request("involved_companies", query)
+            response = igdb_request_with_retry(
+                self.igdb.api_request, "involved_companies", query, logger=self.stdout
+            )
             data = self._decode_response(response)
 
             for ic in data:
@@ -104,7 +107,9 @@ class Command(BaseCommand):
             return []
         ids_str = ", ".join(str(i) for i in company_ids)
         query = f"fields id,name; where id = ({ids_str});"
-        response = self.igdb.api_request("companies", query)
+        response = igdb_request_with_retry(
+            self.igdb.api_request, "companies", query, logger=self.stdout
+        )
         data = self._decode_response(response)
         if not data:
             self.stdout.write(

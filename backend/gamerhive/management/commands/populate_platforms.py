@@ -6,6 +6,7 @@ import os
 import json
 
 from gamerhive.models import Platform
+from gamerhive.http_helpers import igdb_request_with_retry
 
 CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("IGDB_ACCESS_TOKEN")
@@ -22,7 +23,9 @@ class Command(BaseCommand):
 
     def populate_platforms(self):
         query = "fields id,name; limit 500;"
-        response = self.igdb.api_request("platforms", query)
+        response = igdb_request_with_retry(
+            self.igdb.api_request, "platforms", query, logger=self.stdout
+        )
         data = self._decode_response(response)
         for p in data:
             name = p.get("name", "")
