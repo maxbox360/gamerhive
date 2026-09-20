@@ -147,8 +147,16 @@ class Command(BaseCommand):
         settings = Settings.load()
         self.stdout.write("Connecting to IGDB...")
         self.igdb = IGDBWrapper(settings.igdb_client_id, settings.igdb_access_token)
+        self.metrics = {"fetched": 0, "imported": 0, "existing": 0, "skipped": 0}
         self.populate_games(settings)
-        self.stdout.write(self.style.SUCCESS("Finished populating game data!"))
+        m = self.metrics
+        self.stdout.write(
+            self.style.SUCCESS(
+                "Finished populating game data! "
+                f"fetched={m['fetched']} imported={m['imported']} "
+                f"existing={m['existing']} skipped={m['skipped']}"
+            )
+        )
 
     def populate_games(self, settings: Settings):
         platform_ids = get_platform_ids(settings.igdb_platform_families)
@@ -191,17 +199,21 @@ class Command(BaseCommand):
                 self.igdb.api_request, "games", query, logger=self.stdout
             )
             data = self._decode_response(response)
+            self.metrics["fetched"] += len(data)
 
             for g in data:
                 game_id = g.get("id")
                 if game_id is None:
+                    self.metrics["skipped"] += 1
                     continue
                 if game_id in existing_ids:
+                    self.metrics["existing"] += 1
                     continue
 
                 skip_reason = should_skip_game(g, settings, blocked_company_names)
                 if skip_reason:
                     upsert_quarantine(g, skip_reason)
+                    self.metrics["skipped"] += 1
                     continue
 
                 name = (g.get("name") or "")[: Game._meta.get_field("name").max_length]
@@ -215,6 +227,7 @@ class Command(BaseCommand):
                     .exists()
                 ):
                     upsert_quarantine(g, "duplicate_slug")
+                    self.metrics["skipped"] += 1
                     continue
 
                 cover = g.get("cover", {})
@@ -279,6 +292,7 @@ class Command(BaseCommand):
                         game_obj.publishers.add(company_obj)
 
                 game_obj.save()
+                self.metrics["imported"] += 1
 
     def _decode_response(self, response):
         if isinstance(response, bytes):
