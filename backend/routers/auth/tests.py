@@ -205,3 +205,56 @@ class LogoutEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"success": True})
         self.assertNotIn("_auth_user_id", self.client.session)
+
+
+class CurrentUserEndpointTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="currentuser",
+            email="currentuser@example.com",
+            password="StrongPass123!",
+            first_name="Current",
+            last_name="User",
+        )
+        self.other_user = User.objects.create_user(
+            username="otheruser",
+            email="otheruser@example.com",
+            password="StrongPass123!",
+            first_name="Other",
+            last_name="User",
+        )
+
+    def test_authenticated_request_returns_safe_current_user_data(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/auth/me")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], self.user.id)
+        self.assertEqual(data["username"], self.user.username)
+        self.assertEqual(data["email"], self.user.email)
+        self.assertEqual(data["first_name"], self.user.first_name)
+        self.assertEqual(data["last_name"], self.user.last_name)
+        self.assertNotIn("password", data)
+        self.assertNotIn("password_hash", data)
+        self.assertNotIn("session", data)
+
+    def test_unauthenticated_request_returns_401_without_user_data(self):
+        response = self.client.get("/api/auth/me")
+
+        self.assertEqual(response.status_code, 401)
+        data = response.json()
+        self.assertIn("detail", data)
+        self.assertEqual(set(data.keys()), {"detail"})
+
+    def test_endpoint_returns_user_from_current_session(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/auth/me")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], self.user.id)
+        self.assertNotEqual(data["id"], self.other_user.id)
+        self.assertEqual(response.wsgi_request.user, self.user)
