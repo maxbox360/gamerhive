@@ -7,7 +7,14 @@ from django.utils.text import slugify
 from igdb.wrapper import IGDBWrapper
 
 from gamerhive.environment import Settings
-from gamerhive.models import BlockedCompany, Company, Game, Genre, Platform, QuarantinedGame
+from gamerhive.models import (
+    BlockedCompany,
+    Company,
+    Game,
+    Genre,
+    Platform,
+    QuarantinedGame,
+)
 
 SKIP_SUMMARY_TERMS = ["mod", "romhack", "hack", "fanmade"]
 SKIP_NAME_TERMS = ["randomizer"]
@@ -18,10 +25,14 @@ ADULT_AGE_RATING_CODES = {12, 17, 22, 26, 33, 38, 39}
 def get_platform_ids(families):
     if not families:
         return list(Platform.objects.values_list("igdb_platform_id", flat=True))
-    ids = Platform.objects.filter(name__icontains=families[0]).values_list("igdb_platform_id", flat=True)
+    ids = Platform.objects.filter(name__icontains=families[0]).values_list(
+        "igdb_platform_id", flat=True
+    )
     for family in families[1:]:
         ids = list(ids) + list(
-            Platform.objects.filter(name__icontains=family).values_list("igdb_platform_id", flat=True)
+            Platform.objects.filter(name__icontains=family).values_list(
+                "igdb_platform_id", flat=True
+            )
         )
     return ids
 
@@ -66,7 +77,9 @@ def should_skip_game(game_data, settings: Settings, blocked_company_names: set[s
     if (game_data.get("total_rating_count") or 0) < settings.igdb_min_rating_count:
         return "low_rating_count"
 
-    platform_objs = Platform.objects.filter(igdb_platform_id__in=game_data.get("platforms", []))
+    platform_objs = Platform.objects.filter(
+        igdb_platform_id__in=game_data.get("platforms", [])
+    )
     if any(p.category == 5 for p in platform_objs):
         return "platform_category_blocked"
 
@@ -110,7 +123,9 @@ def upsert_quarantine(game_data, reason: str):
     game_id = game_data.get("id")
     if game_id is None:
         return
-    name = (game_data.get("name") or "")[: QuarantinedGame._meta.get_field("name").max_length]
+    name = (game_data.get("name") or "")[
+        : QuarantinedGame._meta.get_field("name").max_length
+    ]
     slug = slugify(game_data.get("slug") or name) or f"game-{game_id}"
     slug = slug[: QuarantinedGame._meta.get_field("slug").max_length]
     QuarantinedGame.objects.update_or_create(
@@ -137,16 +152,22 @@ class Command(BaseCommand):
     def populate_games(self, settings: Settings):
         platform_ids = get_platform_ids(settings.igdb_platform_families)
         if not platform_ids:
-            self.stdout.write(self.style.WARNING("No platform ids matched. Nothing to ingest."))
+            self.stdout.write(
+                self.style.WARNING("No platform ids matched. Nothing to ingest.")
+            )
             return
 
         platform_ids_str = ", ".join(str(p) for p in platform_ids)
         existing_ids = set(
-            Game.objects.exclude(igdb_game_id__isnull=True).values_list("igdb_game_id", flat=True)
+            Game.objects.exclude(igdb_game_id__isnull=True).values_list(
+                "igdb_game_id", flat=True
+            )
         )
         blocked_company_names = {
             name.strip().lower()
-            for name in BlockedCompany.objects.filter(is_active=True).values_list("name", flat=True)
+            for name in BlockedCompany.objects.filter(is_active=True).values_list(
+                "name", flat=True
+            )
             if name and name.strip()
         }
 
@@ -159,8 +180,12 @@ class Command(BaseCommand):
         """
 
         for offset in range(0, settings.igdb_total_games, settings.igdb_batch_size):
-            self.stdout.write(f"Fetching games {offset + 1} to {offset + settings.igdb_batch_size}...")
-            query = game_query_template.format(limit=settings.igdb_batch_size, offset=offset)
+            self.stdout.write(
+                f"Fetching games {offset + 1} to {offset + settings.igdb_batch_size}..."
+            )
+            query = game_query_template.format(
+                limit=settings.igdb_batch_size, offset=offset
+            )
             response = self.igdb.api_request("games", query)
             data = self._decode_response(response)
 
@@ -181,7 +206,11 @@ class Command(BaseCommand):
                 if not slug:
                     slug = f"game-{game_id}"
                 slug = slug[: Game._meta.get_field("slug").max_length]
-                if Game.objects.filter(slug=slug).exclude(igdb_game_id=game_id).exists():
+                if (
+                    Game.objects.filter(slug=slug)
+                    .exclude(igdb_game_id=game_id)
+                    .exists()
+                ):
                     upsert_quarantine(g, "duplicate_slug")
                     continue
 
@@ -224,7 +253,9 @@ class Command(BaseCommand):
 
                 for platform_id in g.get("platforms", []):
                     try:
-                        platform_obj = Platform.objects.get(igdb_platform_id=platform_id)
+                        platform_obj = Platform.objects.get(
+                            igdb_platform_id=platform_id
+                        )
                         game_obj.platforms.add(platform_obj)
                     except Platform.DoesNotExist:
                         continue
@@ -233,7 +264,11 @@ class Command(BaseCommand):
                 for row in company_rows:
                     company_obj, _ = Company.objects.update_or_create(
                         igdb_company_id=row["id"],
-                        defaults={"name": row["name"][: Company._meta.get_field("name").max_length]},
+                        defaults={
+                            "name": row["name"][
+                                : Company._meta.get_field("name").max_length
+                            ]
+                        },
                     )
                     if row["developer"]:
                         game_obj.developers.add(company_obj)

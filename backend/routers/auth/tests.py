@@ -101,10 +101,12 @@ class LoginEndpointTests(TestCase):
     def test_successful_login_sets_session_and_returns_safe_user_data(self):
         response = self.client.post(
             "/api/auth/login",
-            data=json.dumps({
-                "username": "existinguser",
-                "password": "StrongPass123!",
-            }),
+            data=json.dumps(
+                {
+                    "username": "existinguser",
+                    "password": "StrongPass123!",
+                }
+            ),
             content_type="application/json",
         )
 
@@ -125,10 +127,12 @@ class LoginEndpointTests(TestCase):
     def test_incorrect_password_is_rejected_without_sensitive_details(self):
         response = self.client.post(
             "/api/auth/login",
-            data=json.dumps({
-                "username": "existinguser",
-                "password": "WrongPassword123!",
-            }),
+            data=json.dumps(
+                {
+                    "username": "existinguser",
+                    "password": "WrongPassword123!",
+                }
+            ),
             content_type="application/json",
         )
 
@@ -140,10 +144,12 @@ class LoginEndpointTests(TestCase):
     def test_unknown_username_is_rejected_without_sensitive_details(self):
         response = self.client.post(
             "/api/auth/login",
-            data=json.dumps({
-                "username": "missinguser",
-                "password": "StrongPass123!",
-            }),
+            data=json.dumps(
+                {
+                    "username": "missinguser",
+                    "password": "StrongPass123!",
+                }
+            ),
             content_type="application/json",
         )
 
@@ -181,7 +187,6 @@ class LogoutEndpointTests(TestCase):
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
-
 
     def test_successful_logout_clears_authenticated_session(self):
         self.client.force_login(self.user)

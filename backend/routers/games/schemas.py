@@ -3,12 +3,14 @@ from ninja import Schema
 from typing import List, Optional
 from datetime import datetime
 
+
 class GenreSchema(Schema):
     id: int
     name: str
     slug: str
     created_at: datetime
     updated_at: datetime
+
 
 class PlatformSchema(Schema):
     id: int
@@ -20,6 +22,7 @@ class PlatformSchema(Schema):
     url: Optional[str]
     created_at: datetime
     updated_at: datetime
+
 
 class GameSchema(Schema):
     id: int

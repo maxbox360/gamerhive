@@ -45,7 +45,9 @@ def register_user(request, payload: RegisterUserInput):
     if User.objects.filter(email__iexact=email).exists():
         raise HttpError(400, "A user with that email already exists.")
 
-    user = User(username=username, email=email, first_name=first_name, last_name=last_name)
+    user = User(
+        username=username, email=email, first_name=first_name, last_name=last_name
+    )
     try:
         validate_password(payload.password, user=user)
     except DjangoValidationError as exc:

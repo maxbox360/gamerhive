@@ -10,8 +10,10 @@ Usage in PyCharm:
 
 Set breakpoints anywhere in your Django code and they will work!
 """
+
 import os
 import sys
+from pathlib import Path
 
 # Add the backend directory to Python path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +23,6 @@ sys.path.insert(0, BASE_DIR)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gamerhive.settings")
 
 # Load environment variables from .env file (located in parent directory)
-from pathlib import Path
 env_file = Path(BASE_DIR).parent / ".env"
 
 if env_file.exists():
@@ -49,4 +50,3 @@ if __name__ == "__main__":
     print("-" * 50)
 
     execute_from_command_line(sys.argv)
-
