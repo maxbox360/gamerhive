@@ -31,7 +31,7 @@ interface UsePaginatedFetchResult<T> {
  */
 export function usePaginatedFetch<T>(
   buildUrl: (page: number, pageSize: number) => string,
-  dependencies: any[] = [],
+  dependencies: unknown[] = [],
   options: UsePaginatedFetchOptions = {}
 ): UsePaginatedFetchResult<T> {
   const { pageSize = 24, initialPage = 1 } = options;
