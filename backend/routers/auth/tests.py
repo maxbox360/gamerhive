@@ -196,8 +196,8 @@ class LogoutEndpointTests(TestCase):
         self.assertNotIn("_auth_user_id", self.client.session)
 
         post_logout = self.client.get("/api/users/")
-        self.assertEqual(post_logout.status_code, 200)
-        self.assertFalse(post_logout.wsgi_request.user.is_authenticated)
+        self.assertEqual(post_logout.status_code, 401)
+        self.assertEqual(set(post_logout.json().keys()), {"detail"})
 
     def test_unauthenticated_logout_returns_success(self):
         response = self._logout()

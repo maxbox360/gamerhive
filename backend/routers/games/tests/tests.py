@@ -29,6 +29,22 @@ class SessionAuthenticationConfigurationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.wsgi_request.user, self.user)
+        self.assertEqual(response.json()[0]["id"], self.user.id)
+
+    def test_protected_user_endpoint_requires_session(self):
+        response = self.client.get("/api/users/")
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(set(response.json().keys()), {"detail"})
+
+    def test_public_game_endpoints_remain_accessible_without_session(self):
+        games_response = self.client.get("/api/games/games/")
+        genres_response = self.client.get("/api/games/genres")
+        platforms_response = self.client.get("/api/games/platforms")
+
+        self.assertEqual(games_response.status_code, 200)
+        self.assertEqual(genres_response.status_code, 200)
+        self.assertEqual(platforms_response.status_code, 200)
 
     @override_settings(ROOT_URLCONF="routers.games.tests.csrf_test_urls")
     def test_unsafe_requests_require_csrf_token(self):
