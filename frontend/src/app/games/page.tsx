@@ -51,7 +51,7 @@ export default function GamesPage() {
 
     const cards = Array.from(grid.children) as HTMLElement[];
     const firstRowTop = cards[0].offsetTop;
-    const columns = cards.filter((card) => card.offsetTop === firstRowTop).length;
+    const columns = getComputedStyle(grid).gridTemplateColumns.split(/\s+/).filter(Boolean).length;
     const rows = Math.max(1, Math.round(DEFAULT_PAGE_SIZE / columns));
     const aligned = columns * rows;
 
