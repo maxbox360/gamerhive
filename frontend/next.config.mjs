@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@elastic/eui", "@elastic/datemath"],
+  experimental: {
+    optimizePackageImports: ["@elastic/eui"],
+  },
   images: {
     remotePatterns: [
       {

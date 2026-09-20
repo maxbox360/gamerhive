@@ -46,6 +46,8 @@ Do not install Python dependencies into the host environment unless explicitly r
 
 The Docker environment used by the project should be treated as the authoritative development environment.
 
+Never run `npm run build` while the frontend `next dev` server is running against the same `.next` directory. Stop the dev server/container before running a production build, or use isolated build output.
+
 ---
 
 # General Development Principles
