@@ -6,6 +6,11 @@ type RegisterUserPayload = {
   last_name?: string;
 };
 
+type LoginPayload = {
+  username: string;
+  password: string;
+};
+
 type User = {
   id: number;
   username: string;
@@ -65,6 +70,25 @@ export async function registerUser(payload: RegisterUserPayload): Promise<User> 
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "Registration failed. Please try again."));
+  }
+
+  return response.json();
+}
+
+export async function loginUser(payload: LoginPayload): Promise<User> {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Invalid username or password."));
   }
 
   return response.json();

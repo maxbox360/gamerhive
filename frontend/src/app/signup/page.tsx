@@ -35,14 +35,13 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const fieldErrors = {
-    username: values.username.trim() ? undefined : "Username is required.",
-    email: values.email.trim() ? undefined : "Email is required.",
-    password: values.password ? undefined : "Password is required.",
+    username: submitAttempted && !values.username.trim() ? "Username is required." : undefined,
+    email: submitAttempted && !values.email.trim() ? "Email is required." : undefined,
+    password: submitAttempted && !values.password ? "Password is required." : undefined,
   };
-
-  const hasClientErrors = Boolean(fieldErrors.username || fieldErrors.email || fieldErrors.password);
 
   const handleChange =
     (field: keyof FormValues) =>
@@ -52,8 +51,11 @@ export default function SignupPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     setError(null);
     setSuccessMessage(null);
+
+    const hasClientErrors = Boolean(!values.username.trim() || !values.email.trim() || !values.password);
 
     if (hasClientErrors) {
       setError("Enter a username, email, and password to continue.");
@@ -73,6 +75,7 @@ export default function SignupPage() {
 
       setSuccessMessage(`Account created for ${user.username}. Your session is ready.`);
       setValues(initialValues);
+      setSubmitAttempted(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
