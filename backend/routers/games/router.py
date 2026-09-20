@@ -5,7 +5,7 @@ from typing import List
 import random
 from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Prefetch
-from .schema import (
+from .schemas import (
     GameSchema,
     GenreListSchema,
     PlatformListSchema,

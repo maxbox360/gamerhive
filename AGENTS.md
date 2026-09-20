@@ -121,6 +121,20 @@ Do not disable CSRF protection as a shortcut.
 
 Follow the existing router and schema organization.
 
+Django Ninja/Pydantic API request and response schemas should live in a dedicated `schemas.py` file within their respective router/package directory.
+
+`router.py` should contain endpoint/routing logic rather than schema definitions.
+
+Keep schemas associated with their domain/router package rather than creating one global schema module.
+
+Reuse existing schemas when appropriate rather than creating duplicate definitions.
+
+When adding a new API schema, add it to the appropriate `schemas.py`.
+
+When modifying an existing schema, inspect and update the existing `schemas.py` rather than defining a duplicate schema in a router.
+
+Preserve existing API contracts unless the Jira card explicitly calls for a contract change.
+
 API endpoints should:
 
 * Validate input.

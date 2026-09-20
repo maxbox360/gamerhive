@@ -1,41 +1,15 @@
-from typing import Optional
-
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError
-from ninja import Router, Schema
+from ninja import Router
 from ninja.errors import HttpError
+from .schemas import LoginUserInput, LogoutResponse, RegisterUserInput, UserPublicSchema
 
 User = get_user_model()
 
 router = Router(tags=["Authentication"])
-
-
-class RegisterUserInput(Schema):
-    username: str
-    email: str
-    password: str
-    first_name: Optional[str] = ""
-    last_name: Optional[str] = ""
-
-
-class LoginUserInput(Schema):
-    username: str
-    password: str
-
-
-class LogoutResponse(Schema):
-    success: bool
-
-
-class UserPublicSchema(Schema):
-    id: int
-    username: str
-    email: str
-    first_name: Optional[str] = ""
-    last_name: Optional[str] = ""
 
 
 @router.post("/register", response={201: UserPublicSchema})
