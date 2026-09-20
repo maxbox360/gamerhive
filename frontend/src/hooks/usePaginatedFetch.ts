@@ -43,10 +43,12 @@ export function usePaginatedFetch<T>(
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  // Reset to page 1 when dependencies change
+  // Reset to page 1 when dependencies or pageSize change (e.g. a responsive
+  // page size), so a stale page number can't request out-of-range or
+  // misaligned items after the column count changes.
   useEffect(() => {
     setPage(1);
-  }, dependencies);
+  }, [pageSize, ...dependencies]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useLayoutEffect, useRef } from "react";
 import GameCard from "@/components/GameCard";
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 import type { Game, Genre, Platform } from "@/types";
@@ -17,6 +17,12 @@ import {
   EuiPanel,
 } from "@elastic/eui";
 
+// Target item count the grid aims for per page; the actual page size is
+// this rounded to a multiple of however many columns the browser's own
+// auto-fill grid places (measured from real rendered cards below), so the
+// last row is never partial.
+const DEFAULT_PAGE_SIZE = 24;
+
 export default function GamesPage() {
   const FILTER_CACHE_KEY = "games-filters-v1";
   // Available filter options
@@ -31,6 +37,26 @@ export default function GamesPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const apiBaseUrl = apiUrl.replace(/\/$/, "");
+
+  // Read the column count the existing auto-fill grid actually rendered
+  // (rather than re-deriving its width math ourselves, which drifted from
+  // the browser's real layout) by grouping the rendered cards that share
+  // the first card's offsetTop. Align pageSize to a multiple of that count.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const alignPageSize = useCallback(() => {
+    const grid = gridRef.current;
+    if (!grid || grid.children.length === 0) return;
+
+    const cards = Array.from(grid.children) as HTMLElement[];
+    const firstRowTop = cards[0].offsetTop;
+    const columns = cards.filter((card) => card.offsetTop === firstRowTop).length;
+    const rows = Math.max(1, Math.round(DEFAULT_PAGE_SIZE / columns));
+    const aligned = columns * rows;
+
+    setPageSize((prev) => (prev === aligned ? prev : aligned));
+  }, []);
 
   // Fetch genres and platforms for dropdowns
   useEffect(() => {
@@ -107,8 +133,20 @@ export default function GamesPage() {
 
   const { items: games, loading, error, pagination, setPage, refetch } =
     usePaginatedFetch<Game>(buildUrl, [genreFilter, platformFilter, debouncedSearch], {
-      pageSize: 24,
+      pageSize,
     });
+
+  // Re-check column alignment once cards actually render, and again on any
+  // viewport resize (grid may be unmounted during loading, in which case
+  // alignPageSize no-ops and the next data load re-triggers this).
+  useLayoutEffect(() => {
+    alignPageSize();
+  }, [games, alignPageSize]);
+
+  useEffect(() => {
+    window.addEventListener("resize", alignPageSize);
+    return () => window.removeEventListener("resize", alignPageSize);
+  }, [alignPageSize]);
 
   const clearFilters = () => {
     setGenreFilter("");
@@ -231,6 +269,7 @@ export default function GamesPage() {
         {/* Games Grid */}
         {!loading && !error && (
           <div
+            ref={gridRef}
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
