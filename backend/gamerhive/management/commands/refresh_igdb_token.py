@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import requests
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         self.stdout.write("IGDB token missing/expired. Generating a new token...")
         new_token = self._generate_token(client_id, client_secret)
         self._update_env_token(new_token)
+        self._update_runtime_token(new_token)
         self.stdout.write(self.style.SUCCESS("IGDB token refreshed in .env."))
 
     def _token_is_valid(self, client_id: str, token: str) -> bool:
@@ -76,3 +78,7 @@ class Command(BaseCommand):
         else:
             lines.append(f"IGDB_ACCESS_TOKEN={new_token}")
         env_path.write_text("\n".join(lines) + "\n")
+
+    def _update_runtime_token(self, new_token: str) -> None:
+        os.environ["IGDB_ACCESS_TOKEN"] = new_token
+        settings.IGDB_ACCESS_TOKEN = new_token
