@@ -18,7 +18,7 @@ export default function Header() {
         GamerHive
       </div>
       <nav style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-        <Link href="/signin" style={{ color: "#FFD700", textDecoration: "none" }}>Sign In</Link>
+        <Link href="/login" style={{ color: "#FFD700", textDecoration: "none" }}>Login</Link>
         <Link href="/signup" style={{ color: "#FFD700", textDecoration: "none" }}>Create Account</Link>
         <Link href="/games" style={{ color: "#FFD700", textDecoration: "none" }}>Games</Link>
         <Link href="/lists" style={{ color: "#FFD700", textDecoration: "none" }}>Lists</Link>
