@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   EuiButton,
   EuiCallOut,
-  EuiFieldPassword,
   EuiFieldText,
   EuiForm,
   EuiFormRow,
@@ -137,13 +136,22 @@ export default function SignupPage() {
           </EuiFormRow>
 
           <EuiFormRow label="Password" isInvalid={Boolean(fieldErrors.password)} error={fieldErrors.password}>
-            <EuiFieldPassword
+            <input
+              type="password"
               name="password"
               value={values.password}
               onChange={handleChange("password")}
-              isInvalid={Boolean(fieldErrors.password)}
               disabled={isSubmitting}
               autoComplete="new-password"
+              aria-invalid={Boolean(fieldErrors.password)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 4,
+                border: `1px solid ${fieldErrors.password ? "#BD271E" : "#D3DAE6"}`,
+                background: isSubmitting ? "#F5F7FA" : "#fff",
+                color: "#343741",
+              }}
             />
           </EuiFormRow>
 
