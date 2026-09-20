@@ -4,7 +4,7 @@ from ninja import Router
 from typing import List
 import random
 from django.core.paginator import Paginator, EmptyPage
-from django.db.models import Prefetch
+from django.db.models import F, Prefetch
 from .schemas import (
     GameSchema,
     GenreListSchema,
@@ -41,7 +41,7 @@ def list_games(
                 queryset=Platform.objects.only("id", "name", "slug", "abbreviation"),
             ),
         )
-        .order_by("id")
+        .order_by(F("release_date").asc(nulls_last=True), "id")
     )
 
     if genre:
