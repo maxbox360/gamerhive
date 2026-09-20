@@ -11,7 +11,7 @@ type LoginPayload = {
   password: string;
 };
 
-type User = {
+export type User = {
   id: number;
   username: string;
   email: string;
@@ -21,6 +21,23 @@ type User = {
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const apiBaseUrl = apiUrl.replace(/\/$/, "");
+
+export async function getCurrentUser(): Promise<User | null> {
+  const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error("Could not determine the current session.");
+  }
+
+  return response.json();
+}
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {

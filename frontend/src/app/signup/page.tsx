@@ -12,6 +12,7 @@ import {
   EuiText,
   EuiTitle,
 } from "@elastic/eui";
+import { useAuth } from "@/contexts/AuthContext";
 import { registerUser } from "@/utils/auth";
 
 type FormValues = {
@@ -31,6 +32,7 @@ const initialValues: FormValues = {
 };
 
 export default function SignupPage() {
+  const { refreshUser } = useAuth();
   const [values, setValues] = useState<FormValues>(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -72,6 +74,7 @@ export default function SignupPage() {
         first_name: values.firstName.trim(),
         last_name: values.lastName.trim(),
       });
+      await refreshUser();
 
       setSuccessMessage(`Account created for ${user.username}. Your session is ready.`);
       setValues(initialValues);

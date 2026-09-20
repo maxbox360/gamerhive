@@ -3,6 +3,7 @@
 import { EuiProvider } from "@elastic/eui";
 import { ReactNode } from "react";
 import createCache from "@emotion/cache";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Create Emotion cache for EUI
 const cache = createCache({
@@ -18,7 +19,7 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <EuiProvider colorMode="dark" cache={cache}>
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </EuiProvider>
   );
 }
