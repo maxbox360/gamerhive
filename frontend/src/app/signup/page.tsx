@@ -35,6 +35,13 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  const fieldErrors = {
+    username: submitAttempted && !values.username.trim() ? "Username is required." : undefined,
+    email: submitAttempted && !values.email.trim() ? "Email is required." : undefined,
+    password: submitAttempted && !values.password ? "Password is required." : undefined,
+  };
 
   const handleChange =
     (field: keyof FormValues) =>
@@ -44,15 +51,11 @@ export default function SignupPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     setError(null);
     setSuccessMessage(null);
 
-    const fieldErrors = {
-      username: values.username.trim() ? undefined : "Username is required.",
-      email: values.email.trim() ? undefined : "Email is required.",
-      password: values.password ? undefined : "Password is required.",
-    };
-    const hasClientErrors = Boolean(fieldErrors.username || fieldErrors.email || fieldErrors.password);
+    const hasClientErrors = Boolean(!values.username.trim() || !values.email.trim() || !values.password);
 
     if (hasClientErrors) {
       setError("Enter a username, email, and password to continue.");
@@ -72,6 +75,7 @@ export default function SignupPage() {
 
       setSuccessMessage(`Account created for ${user.username}. Your session is ready.`);
       setValues(initialValues);
+      setSubmitAttempted(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
@@ -110,28 +114,30 @@ export default function SignupPage() {
         )}
 
         <EuiForm component="form" onSubmit={handleSubmit}>
-          <EuiFormRow label="Username">
+          <EuiFormRow label="Username" isInvalid={Boolean(fieldErrors.username)} error={fieldErrors.username}>
             <EuiFieldText
               name="username"
               value={values.username}
               onChange={handleChange("username")}
+              isInvalid={Boolean(fieldErrors.username)}
               disabled={isSubmitting}
               autoComplete="username"
             />
           </EuiFormRow>
 
-          <EuiFormRow label="Email">
+          <EuiFormRow label="Email" isInvalid={Boolean(fieldErrors.email)} error={fieldErrors.email}>
             <EuiFieldText
               type="email"
               name="email"
               value={values.email}
               onChange={handleChange("email")}
+              isInvalid={Boolean(fieldErrors.email)}
               disabled={isSubmitting}
               autoComplete="email"
             />
           </EuiFormRow>
 
-          <EuiFormRow label="Password">
+          <EuiFormRow label="Password" isInvalid={Boolean(fieldErrors.password)} error={fieldErrors.password}>
             <input
               type="password"
               name="password"
@@ -139,10 +145,12 @@ export default function SignupPage() {
               onChange={handleChange("password")}
               disabled={isSubmitting}
               autoComplete="new-password"
+              aria-invalid={Boolean(fieldErrors.password)}
               style={{
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: 4,
+                border: `1px solid ${fieldErrors.password ? "#BD271E" : "#D3DAE6"}`,
                 background: isSubmitting ? "#F5F7FA" : "#fff",
                 color: "#343741",
               }}
