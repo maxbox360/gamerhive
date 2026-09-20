@@ -44,6 +44,9 @@ def normalize_origin(value):
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "fallback-secret-key")
+IGDB_CLIENT_ID = os.environ.get("IGDB_CLIENT_ID", "")
+IGDB_CLIENT_SECRET = os.environ.get("IGDB_CLIENT_SECRET", "")
+IGDB_ACCESS_TOKEN = os.environ.get("IGDB_ACCESS_TOKEN", "")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
