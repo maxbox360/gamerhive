@@ -1,7 +1,10 @@
+from collections import Counter
 from datetime import datetime, timezone as dt_timezone
 import json
+import re
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 from igdb.wrapper import IGDBWrapper
@@ -22,20 +25,43 @@ SKIP_NAME_TERMS = ["randomizer"]
 ADULT_TEXT_TERMS = ["hentai", "porn", "erotic", "nsfw", "sex", "adult only"]
 ADULT_AGE_RATING_CODES = {12, 17, 22, 26, 33, 38, 39}
 
+# IGDB platform names don't always contain their family's common name (e.g.
+# "Wii", "Wii U", "GameCube" and "Game Boy" don't contain "Nintendo"), so a
+# plain substring match on the family name alone silently excludes major
+# consoles. Widen matching for known families; unrecognized/custom family
+# strings still fall back to a plain substring match.
+PLATFORM_FAMILY_ALIASES = {
+    "nintendo": [
+        "nintendo",
+        "wii",
+        "gamecube",
+        "game boy",
+        "famicom",
+        "virtual boy",
+    ],
+    # "Dreamcast" and "SG-1000" don't contain "Sega" in IGDB's naming.
+    "sega": ["sega", "dreamcast", "sg-1000"],
+    # "PC Engine SuperGrafx" doesn't contain "TurboGrafx".
+    "turbografx": ["turbografx", "pc engine"],
+}
+
+
+def _contains_term(text: str, terms) -> bool:
+    # Word-boundary match so e.g. "mod" doesn't false-positive inside "modes".
+    return any(re.search(rf"\b{re.escape(term)}\b", text) for term in terms)
+
 
 def get_platform_ids(families):
     if not families:
         return list(Platform.objects.values_list("igdb_platform_id", flat=True))
-    ids = Platform.objects.filter(name__icontains=families[0]).values_list(
-        "igdb_platform_id", flat=True
+    query = Q()
+    for family in families:
+        terms = PLATFORM_FAMILY_ALIASES.get(family.strip().lower(), [family])
+        for term in terms:
+            query |= Q(name__icontains=term)
+    return list(
+        Platform.objects.filter(query).values_list("igdb_platform_id", flat=True)
     )
-    for family in families[1:]:
-        ids = list(ids) + list(
-            Platform.objects.filter(name__icontains=family).values_list(
-                "igdb_platform_id", flat=True
-            )
-        )
-    return ids
 
 
 def _extract_names(items):
@@ -86,9 +112,9 @@ def should_skip_game(game_data, settings: Settings, blocked_company_names: set[s
 
     lower_name = name.lower()
     lower_summary = summary.lower()
-    if any(word in lower_name for word in SKIP_NAME_TERMS):
+    if _contains_term(lower_name, SKIP_NAME_TERMS):
         return "blocked_name_term"
-    if any(word in lower_summary for word in SKIP_SUMMARY_TERMS):
+    if _contains_term(lower_summary, SKIP_SUMMARY_TERMS):
         return "blocked_summary_term"
 
     searchable = " ".join(
@@ -99,7 +125,7 @@ def should_skip_game(game_data, settings: Settings, blocked_company_names: set[s
             " ".join(_extract_names(game_data.get("keywords", []))).lower(),
         ]
     )
-    if any(term in searchable for term in ADULT_TEXT_TERMS):
+    if _contains_term(searchable, ADULT_TEXT_TERMS):
         return "adult_text_term"
 
     age_rating_codes = {
@@ -148,13 +174,18 @@ class Command(BaseCommand):
         self.stdout.write("Connecting to IGDB...")
         self.igdb = IGDBWrapper(settings.igdb_client_id, settings.igdb_access_token)
         self.metrics = {"fetched": 0, "imported": 0, "existing": 0, "skipped": 0}
+        self.skip_reasons = Counter()
         self.populate_games(settings)
         m = self.metrics
+        reasons = ", ".join(
+            f"{reason}={count}" for reason, count in self.skip_reasons.most_common()
+        )
         self.stdout.write(
             self.style.SUCCESS(
                 "Finished populating game data! "
                 f"fetched={m['fetched']} imported={m['imported']} "
                 f"existing={m['existing']} skipped={m['skipped']}"
+                + (f" | skip_reasons: {reasons}" if reasons else "")
             )
         )
 
@@ -183,7 +214,7 @@ class Command(BaseCommand):
         game_query_template = f"""
         fields id,name,genres,platforms,cover.image_id,summary,slug,first_release_date,total_rating_count,age_ratings.rating,themes.name,keywords.name,involved_companies.developer,involved_companies.publisher,involved_companies.company.id,involved_companies.company.name;
         where platforms = ({platform_ids_str});
-        sort popularity desc;
+        sort total_rating_count desc;
         limit {{limit}};
         offset {{offset}};
         """
@@ -205,6 +236,7 @@ class Command(BaseCommand):
                 game_id = g.get("id")
                 if game_id is None:
                     self.metrics["skipped"] += 1
+                    self.skip_reasons["missing_id"] += 1
                     continue
                 if game_id in existing_ids:
                     self.metrics["existing"] += 1
@@ -214,6 +246,7 @@ class Command(BaseCommand):
                 if skip_reason:
                     upsert_quarantine(g, skip_reason)
                     self.metrics["skipped"] += 1
+                    self.skip_reasons[skip_reason] += 1
                     continue
 
                 name = (g.get("name") or "")[: Game._meta.get_field("name").max_length]
@@ -228,6 +261,7 @@ class Command(BaseCommand):
                 ):
                     upsert_quarantine(g, "duplicate_slug")
                     self.metrics["skipped"] += 1
+                    self.skip_reasons["duplicate_slug"] += 1
                     continue
 
                 cover = g.get("cover", {})
