@@ -7,7 +7,8 @@ def igdb_request_with_retry(request_func, endpoint, query, *, logger, retries=3)
     delay = 1
     for attempt in range(1, retries + 1):
         try:
-            logger.write(f"IGDB request {endpoint} attempt {attempt}/{retries}...")
+            if attempt > 1:
+                logger.write(f"IGDB request {endpoint} attempt {attempt}/{retries}...")
             return request_func(endpoint, query)
         except RequestException as exc:
             if attempt == retries:
