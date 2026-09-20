@@ -190,6 +190,7 @@ Always:
 * Avoid exposing sensitive information.
 * Keep secrets and API keys out of source control.
 * Avoid logging passwords, tokens, credentials, or other sensitive data.
+* Do not read, print, or inspect values from `.env` files unless explicitly requested by the user for that task.
 
 Never disable a security mechanism simply to make development easier without explicitly documenting why and receiving approval.
 
