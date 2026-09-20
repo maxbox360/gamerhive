@@ -144,15 +144,16 @@ class GameDiscoveryOrderingTests(TestCase):
             "smash-wiiu",
             datetime(2014, 11, 21, tzinfo=timezone.utc),
         )
-        # Same release date, deterministic tie-break must fall back to id.
-        self.same_date_a = make_game(
-            10, "Tie Game A", "tie-game-a", datetime(2020, 6, 1, tzinfo=timezone.utc)
-        )
-        self.same_date_b = make_game(
-            11, "Tie Game B", "tie-game-b", datetime(2020, 6, 1, tzinfo=timezone.utc)
-        )
+        # Same release date, deterministic tie-break must fall back to id
+        # (Django pk / creation order), not to igdb_game_id or name. The
+        # igdb ids and names below are deliberately reversed relative to
+        # creation order so the test can't pass by coincidence.
+        same_date = datetime(2020, 6, 1, tzinfo=timezone.utc)
+        self.same_date_a = make_game(30, "Zeta Game", "tie-game-a", same_date)
+        self.same_date_b = make_game(20, "Mu Game", "tie-game-b", same_date)
+        self.same_date_c = make_game(10, "Alpha Game", "tie-game-c", same_date)
         # Missing release date must not error and must sort deterministically.
-        self.no_date = make_game(12, "Undated Game", "undated-game", None)
+        self.no_date = make_game(12, "Untitled Release", "undated-game", None)
 
     def _slugs(self, response):
         return [item["slug"] for item in response.json()["items"]]
@@ -192,6 +193,7 @@ class GameDiscoveryOrderingTests(TestCase):
                 "smash-ultimate",
                 "tie-game-a",
                 "tie-game-b",
+                "tie-game-c",
             ],
         )
 
@@ -213,16 +215,41 @@ class GameDiscoveryOrderingTests(TestCase):
                 "smash-ultimate",
                 "tie-game-a",
                 "tie-game-b",
+                "tie-game-c",
+            ],
+        )
+
+    def test_default_discovery_path_is_chronological(self):
+        """Page 1 with no filters (the default discovery view) must also be
+        oldest-first, not a randomized sample."""
+        response = self.client.get("/api/games/games/", {"page_size": 10})
+
+        self.assertEqual(response.status_code, 200)
+        slugs = self._slugs(response)
+        dated_slugs = [s for s in slugs if s != "undated-game"]
+        self.assertEqual(
+            dated_slugs,
+            [
+                "smash-original",
+                "smash-melee",
+                "smash-brawl",
+                "smash-wiiu",
+                "smash-ultimate",
+                "tie-game-a",
+                "tie-game-b",
+                "tie-game-c",
             ],
         )
 
     def test_same_release_date_is_ordered_deterministically_by_id(self):
         response = self.client.get(
-            "/api/games/games/", {"search": "Tie Game", "page_size": 10}
+            "/api/games/games/", {"search": "Game", "page_size": 10}
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self._slugs(response), ["tie-game-a", "tie-game-b"])
+        self.assertEqual(
+            self._slugs(response), ["tie-game-a", "tie-game-b", "tie-game-c"]
+        )
 
     def test_missing_release_date_does_not_error_and_sorts_last(self):
         response = self.client.get(
@@ -240,14 +267,21 @@ class GameDiscoveryOrderingTests(TestCase):
         page_two = self.client.get(
             "/api/games/games/", {"genre": "Fighting", "page": 2, "page_size": 3}
         )
+        page_three = self.client.get(
+            "/api/games/games/", {"genre": "Fighting", "page": 3, "page_size": 3}
+        )
 
         self.assertEqual(page_one.status_code, 200)
         self.assertEqual(page_two.status_code, 200)
+        self.assertEqual(page_three.status_code, 200)
         self.assertEqual(
             self._slugs(page_one), ["smash-original", "smash-melee", "smash-brawl"]
         )
         self.assertEqual(
             self._slugs(page_two), ["smash-wiiu", "smash-ultimate", "tie-game-a"]
         )
-        self.assertEqual(page_one.json()["total"], 8)
+        self.assertEqual(
+            self._slugs(page_three), ["tie-game-b", "tie-game-c", "undated-game"]
+        )
+        self.assertEqual(page_one.json()["total"], 9)
         self.assertEqual(page_one.json()["total_pages"], 3)
