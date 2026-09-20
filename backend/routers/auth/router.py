@@ -12,6 +12,14 @@ User = get_user_model()
 router = Router(tags=["Authentication"])
 
 
+@router.get("/me", response={200: UserPublicSchema, 401: dict})
+def current_user(request):
+    if not request.user.is_authenticated:
+        raise HttpError(401, "Authentication credentials were not provided.")
+
+    return request.user
+
+
 @router.post("/register", response={201: UserPublicSchema})
 def register_user(request, payload: RegisterUserInput):
     username = payload.username.strip()
